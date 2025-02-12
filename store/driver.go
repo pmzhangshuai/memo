@@ -51,6 +51,11 @@ type Driver interface {
 	ListUsers(ctx context.Context, find *FindUser) ([]*User, error)
 	DeleteUser(ctx context.Context, delete *DeleteUser) error
 
+	// User follow related methods.
+	IsFollowingUser(ctx context.Context, follow *UserFollowing) (bool, error)
+	FollowUser(ctx context.Context, follow *UserFollowing) error
+	UnFollowUser(ctx context.Context, UnFollow *UserFollowing) error
+
 	// UserSetting model related methods.
 	UpsertUserSetting(ctx context.Context, upsert *UserSetting) (*UserSetting, error)
 	ListUserSettings(ctx context.Context, find *FindUserSetting) ([]*UserSetting, error)

@@ -1,4 +1,5 @@
 import { Button } from "@usememos/mui";
+import { Rss } from 'lucide-react';
 import copy from "copy-to-clipboard";
 import dayjs from "dayjs";
 import { ExternalLinkIcon } from "lucide-react";
@@ -10,6 +11,7 @@ import MemoView from "@/components/MemoView";
 import MobileHeader from "@/components/MobileHeader";
 import PagedMemoList from "@/components/PagedMemoList";
 import UserAvatar from "@/components/UserAvatar";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import useLoading from "@/hooks/useLoading";
 import { useMemoFilterStore, useUserStore } from "@/store/v1";
 import { Direction, State } from "@/types/proto/api/v1/common";
@@ -24,6 +26,9 @@ const UserProfile = () => {
   const loadingState = useLoading();
   const [user, setUser] = useState<User>();
   const memoFilterStore = useMemoFilterStore();
+
+  const currentUser = useCurrentUser();
+  const readonly = user?.name !== currentUser?.name;
 
   useEffect(() => {
     const username = params.username;
@@ -67,6 +72,14 @@ const UserProfile = () => {
     return conditions.join(" && ");
   }, [user, memoFilterStore.filters]);
 
+  const handleRssLink = () => {
+    if (!user) {
+      return;
+    }
+    // 在新标签页中打开链接
+    window.open(`http://localhost:8081/u/${encodeURIComponent(user.username)}/rss.xml`);
+  };
+
   const handleCopyProfileLink = () => {
     if (!user) {
       return;
@@ -77,27 +90,41 @@ const UserProfile = () => {
   };
 
   return (
-    <section className="w-full max-w-5xl min-h-full flex flex-col justify-start items-center sm:pt-3 md:pt-6 pb-8">
+    <section className="flex flex-col items-center justify-start w-full max-w-5xl min-h-full pb-8 sm:pt-3 md:pt-6">
       <MobileHeader />
-      <div className="w-full px-4 sm:px-6 flex flex-col justify-start items-center">
+      <div className="flex flex-col items-center justify-start w-full px-4 sm:px-6">
         {!loadingState.isLoading &&
           (user ? (
             <>
-              <div className="my-4 w-full flex justify-end items-center gap-2">
+              <div className="flex items-center justify-end w-full gap-2 my-4">
+                <Button variant="outlined" onClick={handleRssLink}>
+                  {t("common.rss")}
+                  <Rss className="w-4 h-auto ml-1 opacity-60" />
+                </Button>
                 <Button variant="outlined" onClick={handleCopyProfileLink}>
                   {t("common.share")}
-                  <ExternalLinkIcon className="ml-1 w-4 h-auto opacity-60" />
+                  <ExternalLinkIcon className="w-4 h-auto ml-1 opacity-60" />
                 </Button>
               </div>
-              <div className="w-full flex flex-col justify-start items-start pt-4 pb-8 px-3">
+              <div className="flex flex-col items-start justify-start w-full px-3 pt-4 pb-8">
                 <UserAvatar className="!w-16 !h-16 drop-shadow rounded-3xl" avatarUrl={user?.avatarUrl} />
                 <div className="mt-2 w-auto max-w-[calc(100%-6rem)] flex flex-col justify-center items-start">
-                  <p className="w-full text-3xl text-black leading-tight font-medium opacity-80 dark:text-gray-200 truncate">
+                  <p className="w-full text-3xl font-medium leading-tight text-black truncate opacity-80 dark:text-gray-200">
                     {user.nickname || user.username}
                   </p>
-                  <p className="w-full text-gray-500 leading-snug dark:text-gray-400 whitespace-pre-wrap truncate line-clamp-6">
+                  <p className="w-full leading-snug text-gray-500 truncate whitespace-pre-wrap dark:text-gray-400 line-clamp-6">
                     {user.description}
                   </p>
+                  {/* <p>{currentUser?.name}</p>
+                  <p>{user?.name}</p> */}
+                  {readonly && (
+                    <div className="flex gap-2 mt-4">
+                      <Button color="primary" size="sm">{t("common.subscribe")}</Button>
+                      {/* <Button size="sm" color="primary" variant="outlined">
+                        私信
+                      </Button> */}
+                    </div>
+                  )}
                 </div>
               </div>
               <MemoFilters />

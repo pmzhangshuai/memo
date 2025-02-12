@@ -30,7 +30,7 @@ const HomeSidebar = (props: Props) => {
       <SearchBar />
       <MemoFilters />
       <StatisticsView />
-      <ShortcutsSection />
+      {/* <ShortcutsSection /> */}
       <TagsSection />
     </aside>
   );

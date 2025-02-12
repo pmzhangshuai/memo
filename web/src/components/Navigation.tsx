@@ -69,7 +69,7 @@ const Navigation = observer((props: Props) => {
       <>
         <div className="relative">
           <BellIcon className="w-6 h-auto opacity-70 shrink-0" />
-          {hasUnreadInbox && <div className="absolute top-0 left-5 w-2 h-2 rounded-full bg-blue-500"></div>}
+          {hasUnreadInbox && <div className="absolute top-0 w-2 h-2 bg-blue-500 rounded-full left-5"></div>}
         </div>
       </>
     ),
@@ -100,15 +100,19 @@ const Navigation = observer((props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = user
-    ? [homeNavLink, resourcesNavLink, exploreNavLink, profileNavLink, inboxNavLink, archivedNavLink, settingNavLink]
+    ? [homeNavLink, exploreNavLink, inboxNavLink, profileNavLink, archivedNavLink, settingNavLink]
     : [exploreNavLink, signInNavLink, aboutNavLink];
+
+  // const navLinks: NavLinkItem[] = user
+  //   ? [homeNavLink, resourcesNavLink, exploreNavLink, profileNavLink, inboxNavLink, archivedNavLink, settingNavLink]
+  //   : [exploreNavLink, signInNavLink, aboutNavLink];
 
   return (
     <header
       className={cn("w-full h-full overflow-auto flex flex-col justify-start items-start py-4 md:pt-6 z-30 hide-scrollbar", className)}
     >
       <UserBanner collapsed={collapsed} />
-      <div className="w-full px-1 py-2 flex flex-col justify-start items-start shrink-0 space-y-2">
+      <div className="flex flex-col items-start justify-start w-full px-1 py-2 space-y-2 shrink-0">
         {navLinks.map((navLink) => (
           <NavLink
             className={({ isActive }) =>

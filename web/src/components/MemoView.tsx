@@ -143,16 +143,16 @@ const MemoView: React.FC<Props> = (props: Props) => {
         />
       ) : (
         <>
-          <div className="w-full flex flex-row justify-between items-center gap-2">
+          <div className="flex flex-row items-center justify-between w-full gap-2">
             <div className="w-auto max-w-[calc(100%-8rem)] grow flex flex-row justify-start items-center">
               {props.showCreator && creator ? (
-                <div className="w-full flex flex-row justify-start items-center">
+                <div className="flex flex-row items-center justify-start w-full">
                   <Link className="w-auto hover:opacity-80" to={`/u/${encodeURIComponent(creator.username)}`} viewTransition>
                     <UserAvatar className="mr-2 shrink-0" avatarUrl={creator.avatarUrl} />
                   </Link>
-                  <div className="w-full flex flex-col justify-center items-start">
+                  <div className="flex flex-col items-start justify-center w-full">
                     <Link
-                      className="w-full block leading-tight hover:opacity-80 truncate text-gray-600 dark:text-gray-400"
+                      className="block w-full leading-tight text-gray-600 truncate hover:opacity-80 dark:text-gray-400"
                       to={`/u/${encodeURIComponent(creator.username)}`}
                       viewTransition
                     >
@@ -168,25 +168,26 @@ const MemoView: React.FC<Props> = (props: Props) => {
                 </div>
               ) : (
                 <div
-                  className="w-full text-sm leading-tight text-gray-400 dark:text-gray-500 select-none"
+                  className="w-full text-sm leading-tight text-gray-400 select-none dark:text-gray-500"
                   onClick={handleGotoMemoDetailPage}
                 >
                   {displayTime}
                 </div>
               )}
             </div>
-            <div className="flex flex-row justify-end items-center select-none shrink-0 gap-2">
-              <div className="w-auto invisible group-hover:visible flex flex-row justify-between items-center gap-2">
+            <div className="flex flex-row items-center justify-end gap-2 select-none shrink-0">
+              <div className="flex flex-row items-center justify-between invisible w-auto gap-2 group-hover:visible">
                 {props.showVisibility && memo.visibility !== Visibility.PRIVATE && (
                   <Tooltip title={t(`memo.visibility.${convertVisibilityToString(memo.visibility).toLowerCase()}` as any)} placement="top">
-                    <span className="flex justify-center items-center hover:opacity-70">
+                    <span className="flex items-center justify-center hover:opacity-70">
                       <VisibilityIcon visibility={memo.visibility} />
                     </span>
                   </Tooltip>
                 )}
-                {currentUser && !isArchived && <ReactionSelector className="border-none w-auto h-auto" memo={memo} />}
+                {currentUser && !isArchived && <ReactionSelector className="w-auto h-auto border-none" memo={memo} />}
               </div>
-              {!isInMemoDetailPage && (workspaceMemoRelatedSetting.enableComment || commentAmount > 0) && (
+              {/* workspaceMemoRelatedSetting.enableComment || commentAmount > 0 */}
+              {!isInMemoDetailPage && (true || commentAmount > 0) && (
                 <Link
                   className={cn(
                     "flex flex-row justify-start items-center hover:opacity-70",
@@ -212,6 +213,7 @@ const MemoView: React.FC<Props> = (props: Props) => {
               <MemoActionMenu className="-ml-1" memo={memo} readonly={readonly} onEdit={() => setShowEditor(true)} />
             </div>
           </div>
+          {/* props.compact && workspaceMemoRelatedSetting.enableAutoCompact */}
           <MemoContent
             key={`${memo.name}-${memo.updateTime}`}
             memoName={memo.name}
@@ -219,13 +221,15 @@ const MemoView: React.FC<Props> = (props: Props) => {
             readonly={readonly}
             onClick={handleMemoContentClick}
             onDoubleClick={handleMemoContentDoubleClick}
-            compact={props.compact && workspaceMemoRelatedSetting.enableAutoCompact}
+            compact={props.compact && true}
             parentPage={parentPage}
           />
           {memo.location && <MemoLocationView location={memo.location} />}
           <MemoResourceListView resources={memo.resources} />
           <MemoRelationListView memo={memo} relations={referencedMemos} parentPage={parentPage} />
           <MemoReactionistView memo={memo} reactions={memo.reactions} />
+          {/* <p>作者：{memo.creator}</p>
+          <p>当前登录：{user?.name}</p> */}
         </>
       )}
     </div>

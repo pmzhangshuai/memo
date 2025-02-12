@@ -768,6 +768,23 @@ func (x *GetUserStatsRequest) GetName() string {
 	return ""
 }
 
+type FollowUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Follow       *UserFollow           `protobuf:"bytes,1,opt,name=follow,proto3" json:"follow,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+type UserFollow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The name of the user.
+	UserName string `protobuf:"bytes,1,opt,name=userName,proto3" json:"userName,omitempty"`
+	// The name of the user to follow.
+	FollowingUserName string `protobuf:"bytes,2,opt,name=followingUserName,proto3" json:"followingUserName,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
 type UserSetting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The name of the user.

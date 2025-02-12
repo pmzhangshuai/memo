@@ -1,3 +1,5 @@
+import { Tooltip } from "@mui/joy";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import usePrevious from "react-use/lib/usePrevious";
@@ -8,6 +10,8 @@ import Loading from "@/pages/Loading";
 import { Routes } from "@/router";
 import { useMemoFilterStore } from "@/store/v1";
 import { cn } from "@/utils";
+import { useTranslate } from "@/utils/i18n";
+import "@/less/root-layout.less";
 
 const RootLayout = () => {
   const location = useLocation();
@@ -18,6 +22,7 @@ const RootLayout = () => {
   const [initialized, setInitialized] = useState(false);
   const pathname = useMemo(() => location.pathname, [location.pathname]);
   const prevPathname = usePrevious(pathname);
+  const t = useTranslate();
 
   useEffect(() => {
     if (!currentUser) {
@@ -36,6 +41,14 @@ const RootLayout = () => {
     }
   }, [prevPathname, pathname, searchParams]);
 
+  // 添加 collapsed 状态和切换函数
+  const [collapsed, setCollapsed] = useState(true);
+
+  // 切换 collapsed 状态的函数
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => !prev);
+  };
+
   return !initialized ? (
     <Loading />
   ) : (
@@ -45,13 +58,27 @@ const RootLayout = () => {
           <div
             className={cn(
               "group flex flex-col justify-start items-start fixed top-0 left-0 select-none border-r dark:border-zinc-800 h-full bg-zinc-100 dark:bg-zinc-800 dark:bg-opacity-40 transition-all hover:shadow-xl z-2",
-              "w-16 px-2",
+              collapsed ? "w-16" : "w-56", // 根据 collapsed 状态调整宽度
+              "px-2",
+              "hover-show-text", // 用于悬停显示文字
             )}
           >
-            <Navigation collapsed={true} />
+            <Navigation collapsed={collapsed} />
+            <div className="flex items-center justify-center mt-auto mb-5">
+              {collapsed ? (
+                <Tooltip title={t("common.expand")} placement="right" arrow>
+                  <ChevronRightIcon onClick={toggleCollapsed} className="w-6 h-auto opacity-70 shrink-0" />
+                </Tooltip>
+              ) : (
+                <div className="flex" onClick={toggleCollapsed}>
+                  <ChevronLeftIcon className="w-6 h-auto opacity-70 shrink-0" />
+                  <span className="hidden ml-2 left">{t("common.collapse")}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
-        <main className="w-full h-auto flex-grow shrink flex flex-col justify-start items-center">
+        <main className={cn("flex flex-col items-center justify-start flex-grow w-full h-auto shrink", collapsed ? "" : "sm:ml-56")}>
           <Suspense fallback={<Loading />}>
             <Outlet />
           </Suspense>

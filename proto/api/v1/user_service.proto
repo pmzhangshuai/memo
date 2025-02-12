@@ -63,6 +63,24 @@ service UserService {
     option (google.api.http) = {get: "/api/v1/{name=users/*}/stats"};
     option (google.api.method_signature) = "name";
   }
+  // 判断是否已关注用户
+  rpc IsFollowingUser(IsFollowingUserRequest) returns (IsFollowingUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/isfollow"
+      body: "follow"
+    };
+  }
+  // 关注/取消关注用户
+  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/follow"
+      body: "follow"
+    };
+  }
+  // 获取关注列表
+  rpc GetFollowingList(GetFollowingListRequest) returns (GetFollowingList) {
+    option (google.api.http) = {get: "/api/v1/following"};
+  }
   // GetUserSetting gets the setting of a user.
   rpc GetUserSetting(GetUserSettingRequest) returns (UserSetting) {
     option (google.api.http) = {get: "/api/v1/{name=users/*}/setting"};

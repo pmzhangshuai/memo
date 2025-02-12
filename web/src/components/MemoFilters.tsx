@@ -68,11 +68,11 @@ const MemoFilters = () => {
   };
 
   if (filters.length === 0) {
-    return undefined;
+    return null;
   }
 
   return (
-    <div className="w-full mt-3 flex flex-row justify-start items-center flex-wrap gap-x-2 gap-y-1">
+    <div className="flex flex-row flex-wrap items-center justify-start w-full mt-3 gap-x-2 gap-y-1">
       {filters.map((filter) => (
         <div
           key={getMemoFilterKey(filter)}
@@ -80,7 +80,7 @@ const MemoFilters = () => {
           onClick={() => memoFilterStore.removeFilter((f) => isEqual(f, filter))}
         >
           <FactorIcon className="w-4 h-auto text-gray-500 dark:text-gray-400 opacity-60" factor={filter.factor} />
-          <span className="text-gray-500 dark:text-gray-400 text-sm max-w-32 truncate">{getFilterDisplayText(filter)}</span>
+          <span className="text-sm text-gray-500 truncate dark:text-gray-400 max-w-32">{getFilterDisplayText(filter)}</span>
           <button className="text-gray-500 dark:text-gray-300 opacity-60 hover:opacity-100">
             <XIcon className="w-4 h-auto" />
           </button>

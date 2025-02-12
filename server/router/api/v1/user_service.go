@@ -254,6 +254,69 @@ func (s *APIV1Service) DeleteUser(ctx context.Context, request *v1pb.DeleteUserR
 	return &emptypb.Empty{}, nil
 }
 
+func (s *APIV1Service) IsFollowingUser(ctx context.Context, request *v1pb.UserFollow) (bool, error) {
+	currentUser, err := s.GetCurrentUser(ctx)
+	if err != nil {
+		return false, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+
+	// currentUserID, err := ExtractUserIDFromName(request.Follow.UserName)
+	currentUserID := currentUser.ID
+	targetUserID, err := ExtractUserIDFromName(request.FollowingUserName)
+
+	result, err := s.Store.IsFollowingUser(ctx, &store.UserFollowing{
+		UserID:          currentUserID,
+		FollowingUserID: targetUserID,
+	})
+	if err != nil {
+		return false, status.Errorf(codes.Internal, "failed to check following status: %v", err)
+	}
+
+	return result, nil
+}
+
+func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserRequest) (*v1pb.UserFollow, error) {
+	currentUser, err := s.GetCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+
+	// currentUserID, err := ExtractUserIDFromName(request.Follow.UserName)
+	currentUserID := currentUser.ID
+	targetUserID, err := ExtractUserIDFromName(request.Follow.FollowingUserName)
+
+	result, err := s.Store.IsFollowingUser(ctx, &store.UserFollowing{
+		UserID:          currentUserID,
+		FollowingUserID: targetUserID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check following status: %v", err)
+	}
+
+	if result {
+		err := s.Store.UnFollowUser(ctx, &store.UserFollowing{
+			UserID:          currentUserID,
+			FollowingUserID: targetUserID,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unfollow user: %v", err)
+		}
+	} else {
+		err := s.Store.FollowUser(ctx, &store.UserFollowing{
+			UserID:          currentUserID,
+			FollowingUserID: targetUserID,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to follow user: %v", err)
+		}
+	}
+
+	return &v1pb.UserFollow{
+		UserName:          request.Follow.UserName,
+		FollowingUserName: request.Follow.FollowingUserName,
+	}, nil
+}
+
 func getDefaultUserSetting() *v1pb.UserSetting {
 	return &v1pb.UserSetting{
 		Locale:         "en",

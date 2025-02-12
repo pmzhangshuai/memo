@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ExploreSidebar, ExploreSidebarDrawer } from "@/components/ExploreSidebar";
 import MemoView from "@/components/MemoView";
 import MobileHeader from "@/components/MobileHeader";
@@ -48,6 +48,47 @@ const Explore = () => {
     return conditions.join(" && ");
   }, [user, memoFilterStore.filters, memoFilterStore.orderByTimeAsc]);
 
+  // 添加状态来管理当前选中的 Tab
+  const [activeTab, setActiveTab] = useState("default"); // 'default' 或 'subscriptions'
+
+  // 切换 Tab 的函数
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  // 根据 activeTab 渲染不同的内容
+  const renderMemoList = () => {
+    if (activeTab === "default") {
+      // 渲染当前 Memo 列表
+      return (
+        <PagedMemoList
+          renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showCreator showVisibility compact />}
+          listSort={(memos: Memo[]) =>
+            memos
+              .filter((memo) => memo.state === State.NORMAL)
+              .sort((a, b) =>
+                memoFilterStore.orderByTimeAsc
+                  ? dayjs(a.displayTime).unix() - dayjs(b.displayTime).unix()
+                  : dayjs(b.displayTime).unix() - dayjs(a.displayTime).unix(),
+              )
+          }
+          direction={memoFilterStore.orderByTimeAsc ? Direction.ASC : Direction.DESC}
+          oldFilter={memoListFilter}
+        />
+      );
+    } else if (activeTab === "subscriptions") {
+      // 渲染已关注用户发布的 Memo 列表
+      // 这里需要获取已关注用户的 Memo 列表，可能需要调用 API 或使用其他状态管理
+      // 为了示例，这里只是返回一个空列表或占位符
+      return (
+        <div>Subscribed Memos will go here...</div>
+        // 或者调用一个获取订阅 Memo 的组件/函数
+        // <SubscribedMemoList />
+      );
+    }
+    return null;
+  };
+
   return (
     <section className="@container w-full min-h-full flex flex-col justify-start items-center">
       {!md && (
@@ -68,21 +109,29 @@ const Explore = () => {
           </div>
         )}
         <div className={cn("w-full mx-auto px-4 sm:px-6 sm:pt-3 md:pt-6 pb-8", md && "max-w-3xl")}>
-          <div className="flex flex-col justify-start items-start w-full max-w-full">
-            <PagedMemoList
-              renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showCreator showVisibility compact />}
-              listSort={(memos: Memo[]) =>
-                memos
-                  .filter((memo) => memo.state === State.NORMAL)
-                  .sort((a, b) =>
-                    memoFilterStore.orderByTimeAsc
-                      ? dayjs(a.displayTime).unix() - dayjs(b.displayTime).unix()
-                      : dayjs(b.displayTime).unix() - dayjs(a.displayTime).unix(),
-                  )
-              }
-              direction={memoFilterStore.orderByTimeAsc ? Direction.ASC : Direction.DESC}
-              oldFilter={memoListFilter}
-            />
+          <div className="flex flex-col items-start justify-start w-full max-w-full">
+            {/* 添加 Tab 按钮 */}
+            <div className="flex mb-4">
+              <button
+                className={cn(
+                  "px-4 py-2 border-none", // 移除背景色，添加无边框样式
+                  activeTab === "default" ? "text-blue-500 font-bold" : "text-gray-500" // 选中时高亮，未选中时灰色
+                )}
+                onClick={() => handleTabChange("default")}
+              >
+                默认
+              </button>
+              <button
+                className={cn(
+                  "px-4 py-2 border-none", // 移除背景色，添加无边框样式
+                  activeTab === "subscriptions" ? "text-blue-500 font-bold" : "text-gray-500" // 选中时高亮，未选中时灰色
+                )}
+                onClick={() => handleTabChange("subscriptions")}
+              >
+                订阅
+              </button>
+            </div>
+            {renderMemoList()}
           </div>
         </div>
       </div>

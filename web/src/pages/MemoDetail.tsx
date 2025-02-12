@@ -38,7 +38,8 @@ const MemoDetail = () => {
   const commentRelations =
     memo?.relations.filter((relation) => relation.relatedMemo?.name === memo.name && relation.type === MemoRelation_Type.COMMENT) || [];
   const comments = commentRelations.map((relation) => memoStore.getMemoByName(relation.memo!.name)).filter((memo) => memo) as any as Memo[];
-  const showCreateCommentButton = workspaceMemoRelatedSetting.enableComment && currentUser && !showCommentEditor;
+  // workspaceMemoRelatedSetting.enableComment && currentUser
+  const showCreateCommentButton = true && currentUser && !showCommentEditor;
 
   // Prepare memo.
   useEffect(() => {
@@ -94,21 +95,21 @@ const MemoDetail = () => {
       <div className={cn("w-full flex flex-row justify-start items-start px-4 sm:px-6 gap-4")}>
         <div className={cn(md ? "w-[calc(100%-15rem)]" : "w-full")}>
           {parentMemo && (
-            <div className="w-auto inline-block mb-2">
+            <div className="inline-block w-auto mb-2">
               <Link
-                className="px-3 py-1 border rounded-lg max-w-xs w-auto text-sm flex flex-row justify-start items-center flex-nowrap text-gray-600 dark:text-gray-400 dark:border-gray-500 hover:shadow hover:opacity-80"
+                className="flex flex-row items-center justify-start w-auto max-w-xs px-3 py-1 text-sm text-gray-600 border rounded-lg flex-nowrap dark:text-gray-400 dark:border-gray-500 hover:shadow hover:opacity-80"
                 to={`/${parentMemo.name}`}
                 state={locationState}
                 viewTransition
               >
-                <ArrowUpLeftFromCircleIcon className="w-4 h-auto shrink-0 opacity-60 mr-2" />
+                <ArrowUpLeftFromCircleIcon className="w-4 h-auto mr-2 shrink-0 opacity-60" />
                 <span className="truncate">{parentMemo.content}</span>
               </Link>
             </div>
           )}
           <MemoView
             key={`${memo.name}-${memo.displayTime}`}
-            className="shadow hover:shadow-md transition-all"
+            className="transition-all shadow hover:shadow-md"
             memo={memo}
             compact={false}
             parentPage={locationState?.from}
@@ -116,27 +117,27 @@ const MemoDetail = () => {
             showVisibility
             showPinned
           />
-          <div className="pt-8 pb-16 w-full">
+          <div className="w-full pt-8 pb-16">
             <h2 id="comments" className="sr-only">
               {t("memo.comment.self")}
             </h2>
-            <div className="relative mx-auto flex-grow w-full min-h-full flex flex-col justify-start items-start gap-y-1">
+            <div className="relative flex flex-col items-start justify-start flex-grow w-full min-h-full mx-auto gap-y-1">
               {comments.length === 0 ? (
                 showCreateCommentButton && (
-                  <div className="w-full flex flex-row justify-center items-center py-6">
+                  <div className="flex flex-row items-center justify-center w-full py-6">
                     <Button variant="plain" color="primary" onClick={handleShowCommentEditor}>
                       <span className="text-gray-500">{t("memo.comment.write-a-comment")}</span>
-                      <MessageCircleIcon className="ml-2 w-5 h-auto text-gray-500" />
+                      <MessageCircleIcon className="w-5 h-auto ml-2 text-gray-500" />
                     </Button>
                   </div>
                 )
               ) : (
                 <>
-                  <div className="w-full flex flex-row justify-between items-center h-8 pl-3 mb-2">
-                    <div className="flex flex-row justify-start items-center">
-                      <MessageCircleIcon className="w-5 h-auto text-gray-400 mr-1" />
-                      <span className="text-gray-400 text-sm">{t("memo.comment.self")}</span>
-                      <span className="text-gray-400 text-sm ml-1">({comments.length})</span>
+                  <div className="flex flex-row items-center justify-between w-full h-8 pl-3 mb-2">
+                    <div className="flex flex-row items-center justify-start">
+                      <MessageCircleIcon className="w-5 h-auto mr-1 text-gray-400" />
+                      <span className="text-sm text-gray-400">{t("memo.comment.self")}</span>
+                      <span className="ml-1 text-sm text-gray-400">({comments.length})</span>
                     </div>
                     {showCreateCommentButton && (
                       <Button variant="plain" color="primary" className="text-gray-500" onClick={handleShowCommentEditor}>
@@ -171,7 +172,7 @@ const MemoDetail = () => {
           </div>
         </div>
         {md && (
-          <div className="sticky top-0 left-0 shrink-0 -mt-6 w-56 h-full">
+          <div className="sticky top-0 left-0 w-56 h-full -mt-6 shrink-0">
             <MemoDetailSidebar className="py-6" memo={memo} parentPage={locationState?.from} />
           </div>
         )}

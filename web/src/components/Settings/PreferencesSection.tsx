@@ -42,18 +42,18 @@ const PreferencesSection = observer(() => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-2 pt-2 pb-4">
+    <div className="flex flex-col w-full gap-2 pt-2 pb-4">
       <p className="font-medium text-gray-700 dark:text-gray-500">{t("common.basic")}</p>
-      <div className="w-full flex flex-row justify-between items-center">
+      <div className="flex flex-row items-center justify-between w-full">
         <span>{t("common.language")}</span>
         <LocaleSelect value={setting.locale} onChange={handleLocaleSelectChange} />
       </div>
-      <div className="w-full flex flex-row justify-between items-center">
+      <div className="flex flex-row items-center justify-between w-full">
         <span>{t("setting.preference-section.theme")}</span>
         <AppearanceSelect value={setting.appearance as Appearance} onChange={handleAppearanceSelectChange} />
       </div>
       <p className="font-medium text-gray-700 dark:text-gray-500">{t("setting.preference")}</p>
-      <div className="w-full flex flex-row justify-between items-center">
+      <div className="flex flex-row items-center justify-between w-full">
         <span className="truncate">{t("setting.preference-section.default-memo-visibility")}</span>
         <Select
           className="!min-w-fit"
@@ -65,19 +65,26 @@ const PreferencesSection = observer(() => {
             }
           }}
         >
-          {[Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
+          {[Visibility.PRIVATE, Visibility.PUBLIC]
             .map((v) => convertVisibilityToString(v))
             .map((item) => (
               <Option key={item} value={item} className="whitespace-nowrap">
                 {t(`memo.visibility.${item.toLowerCase() as Lowercase<typeof item>}`)}
               </Option>
             ))}
+            {/* {[Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
+            .map((v) => convertVisibilityToString(v))
+            .map((item) => (
+              <Option key={item} value={item} className="whitespace-nowrap">
+                {t(`memo.visibility.${item.toLowerCase() as Lowercase<typeof item>}`)}
+              </Option>
+            ))} */}
         </Select>
       </div>
 
-      <Divider className="!my-3" />
+      {/* <Divider className="!my-3" />
 
-      <WebhookSection />
+      <WebhookSection /> */}
     </div>
   );
 });

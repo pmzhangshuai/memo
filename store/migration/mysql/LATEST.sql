@@ -26,6 +26,20 @@ CREATE TABLE `user` (
   `description` VARCHAR(256) NOT NULL DEFAULT ''
 );
 
+-- user_following
+CREATE TABLE `user_following` (
+    `id`          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id`     INTEGER NOT NULL,
+    `following_user_id` INTEGER NOT NULL,
+    `tag` VARCHAR(256) NOT NULL DEFAULT 'default',
+    `created_ts`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- 联合唯一约束，避免重复关注
+    UNIQUE(`user_id`, `following_user_id`),
+    -- 外键约束（假设原用户表为 `user`）
+    FOREIGN KEY (`user_id`) REFERENCES user(`id`),
+    FOREIGN KEY (`following_user_id`) REFERENCES user(`id`)
+);
+
 -- user_setting
 CREATE TABLE `user_setting` (
   `user_id` INT NOT NULL,

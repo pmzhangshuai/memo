@@ -12,6 +12,7 @@ type Store struct {
 	driver                Driver
 	workspaceSettingCache sync.Map // map[string]*storepb.WorkspaceSetting
 	userCache             sync.Map // map[int]*User
+	userFollowCache       sync.Map // map[int]*storepb.UserFollow
 	userSettingCache      sync.Map // map[string]*storepb.UserSetting
 	idpCache              sync.Map // map[int]*storepb.IdentityProvider
 }
