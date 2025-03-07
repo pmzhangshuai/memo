@@ -94,13 +94,23 @@ func (s *APIV1Service) CreateResource(ctx context.Context, request *v1pb.CreateR
 	return s.convertResourceFromStore(ctx, resource), nil
 }
 
-func (s *APIV1Service) ListResources(ctx context.Context, _ *v1pb.ListResourcesRequest) (*v1pb.ListResourcesResponse, error) {
-	user, err := s.GetCurrentUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+func (s *APIV1Service) ListResources(ctx context.Context, request *v1pb.ListResourcesRequest) (*v1pb.ListResourcesResponse, error) {
+	var userID int32
+	var err error
+	if request.Parent != "" && request.Parent != "users/-" {
+		userID, err = ExtractUserIDFromName(request.Parent)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid parent: %v", err)
+		}
+	} else {
+		user, err := s.GetCurrentUser(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+		}
+		userID = user.ID
 	}
 	resources, err := s.Store.ListResources(ctx, &store.FindResource{
-		CreatorID: &user.ID,
+		CreatorID: &userID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list resources: %v", err)

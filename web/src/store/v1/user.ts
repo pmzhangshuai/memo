@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { authServiceClient, userServiceClient } from "@/grpcweb";
-import { User, UserSetting, User_Role } from "@/types/proto/api/v1/user_service";
+import { User, UserFollowing, UserSetting, User_Role } from "@/types/proto/api/v1/user_service";
+import { userStore } from "../v2";
 
 interface State {
   userMapByName: Record<string, User>;
@@ -84,16 +85,23 @@ export const useUserStore = create(
       return userMap[name];
     },
     updateUser: async (user: Partial<User>, updateMask: string[]) => {
-      const updatedUser = await userServiceClient.updateUser({
-        user: user,
-        updateMask: updateMask,
-      });
+      const updatedUser = await userStore.updateUser(user, updateMask);
+      // const updatedUser = await userServiceClient.updateUser({
+      //   user: user,
+      //   updateMask: updateMask,
+      // });
       const userMap = get().userMapByName;
       if (user.name && user.name !== updatedUser.name) {
         delete userMap[user.name];
       }
       userMap[updatedUser.name] = updatedUser;
       set({ userMapByName: userMap });
+      // userStore.state.setPartial({
+      //   userMapByName: {
+      //     ...userMap,
+      //     [user.name as string]: user as User,
+      //   },
+      // });
       if (user.name === get().currentUser) {
         set({ currentUser: updatedUser.name });
       }
@@ -120,6 +128,26 @@ export const useUserStore = create(
         }),
       });
       return user;
+    },
+    isFollowingUser: async (userFollowing: Partial<UserFollowing>) => {
+      const { result } = await userServiceClient.isFollowingUser({
+        follow: userFollowing,
+      });
+      return result;
+    },
+    followUser: async (userFollowing: Partial<UserFollowing>) => {
+      const response = await userServiceClient.followUser({
+        follow: userFollowing,
+      });
+      return response;
+    },
+    getFollowingList: async (userID: string) => {
+      const followingList = await userServiceClient.getFollowingList({ name: userID });
+      return followingList;
+    },
+    getFollowerList: async (userID: string) => {
+      const followerList = await userServiceClient.getFollowerList({ name: userID });
+      return followerList;
     },
     updateUserSetting: async (userSetting: Partial<UserSetting>, updateMask: string[]) => {
       const updatedUserSetting = await userServiceClient.updateUserSetting({

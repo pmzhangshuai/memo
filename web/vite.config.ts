@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { codeInspectorPlugin } from "code-inspector-plugin";
 import { resolve } from "path";
 import { defineConfig } from "vite";
+import { VitePWA } from 'vite-plugin-pwa';
 
 let devProxyServer = "http://localhost:8081";
 if (process.env.DEV_PROXY_SERVER && process.env.DEV_PROXY_SERVER.length > 0) {
@@ -16,6 +17,7 @@ export default defineConfig({
     codeInspectorPlugin({
       bundler: "vite",
     }),
+    VitePWA({ registerType: 'autoUpdate' }),
   ],
   server: {
     host: "0.0.0.0",

@@ -646,7 +646,7 @@ func file_api_v1_webhook_service_proto_init() {
 	if File_api_v1_webhook_service_proto != nil {
 		return
 	}
-	file_api_v1_memo_service_proto_init()
+	file_memo_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

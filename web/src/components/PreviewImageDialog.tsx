@@ -1,5 +1,8 @@
-import { XIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import useNavigateTo from "@/hooks/useNavigateTo";
+import { useMemoStore } from "@/store/v1";
+import { Memo } from "@/types/proto/api/v1/memo_service";
 import { generateDialog } from "./Dialog";
 import "@/less/preview-image-dialog.less";
 
@@ -10,6 +13,9 @@ const SCALE_UNIT = 0.25;
 interface Props extends DialogProps {
   imgUrls: string[];
   initialIndex: number;
+  memoName?: string;
+  // parentPage?: string;
+  onNavigate?: (route: string) => void;
 }
 
 interface State {
@@ -24,11 +30,24 @@ const defaultState: State = {
   originY: -1,
 };
 
-const PreviewImageDialog: React.FC<Props> = ({ destroy, imgUrls, initialIndex }: Props) => {
+const PreviewImageDialog: React.FC<Props> = ({ destroy, imgUrls, initialIndex, memoName, onNavigate }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [state, setState] = useState<State>(defaultState);
   let startX = -1;
   let endX = -1;
+
+  const memoStore = useMemoStore();
+  const [memo, setMemo] = useState<Memo | null>(null);
+  useEffect(() => {
+    if (memoName) {
+      (async () => {
+        const memo = await memoStore.getOrFetchMemoByName(memoName);
+        setMemo(memo);
+      })();
+    } else {
+      return;
+    }
+  }, [memoName]);
 
   const handleCloseBtnClick = () => {
     destroyAndResetViewport();
@@ -86,12 +105,27 @@ const PreviewImageDialog: React.FC<Props> = ({ destroy, imgUrls, initialIndex }:
     }
   };
 
-  const handleImgContainerClick = (event: React.MouseEvent) => {
-    if (event.clientX < window.innerWidth / 2) {
-      showPrevImg();
-    } else {
-      showNextImg();
-    }
+  // const handleImgContainerClick = (event: React.MouseEvent) => {
+  //   if (event.clientX < window.innerWidth / 2) {
+  //     showPrevImg();
+  //   } else {
+  //     showNextImg();
+  //   }
+  // };
+
+  // const navigateTo = useNavigateTo();
+  // const parent = parentPage || location.pathname;
+  // const handleGotoMemoDetailPage = useCallback(() => {
+  //   navigateTo(`/${memo?.name}`, {
+  //     state: {
+  //       from: parent,
+  //     },
+  //   });
+  // }, [memo?.name, parent]);
+
+  const [showNavButtons, setShowNavButtons] = useState(true); // 控制导航按钮的显示状态
+  const handleImageClick = () => {
+    setShowNavButtons(!showNavButtons); // 切换导航按钮的显示状态
   };
 
   const handleImageContainerKeyDown = (event: KeyboardEvent) => {
@@ -159,11 +193,11 @@ const PreviewImageDialog: React.FC<Props> = ({ destroy, imgUrls, initialIndex }:
           <XIcon className="icon-img" />
         </button>
       </div>
-      <div className="img-container" onClick={handleImgContainerClick}>
+      <div className="img-container">
         <img
           style={imageComputedStyle}
           src={imgUrls[currentIndex]}
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleImageClick}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -171,12 +205,51 @@ const PreviewImageDialog: React.FC<Props> = ({ destroy, imgUrls, initialIndex }:
           decoding="async"
           loading="lazy"
         />
+        {showNavButtons && currentIndex > 0 && (
+          <button
+            className="absolute p-2 text-white transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full cursor-pointer top-1/2 left-10"
+            onClick={showPrevImg}
+          >
+            <ChevronLeftIcon className="w-6 h-6" />
+          </button>
+        )}
+        {showNavButtons && currentIndex < imgUrls.length - 1 && (
+          <button
+            className="absolute p-2 text-white transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full cursor-pointer top-1/2 right-10"
+            onClick={showNextImg}
+          >
+            <ChevronRightIcon className="w-6 h-6" />
+          </button>
+        )}
+        {showNavButtons && memo && (
+          <div className="absolute bottom-0 left-0 right-0 p-2 text-white bg-black bg-opacity-20">
+            <div className="text-sm">{memo.displayTime?.toLocaleString()}</div>
+            <div className="text-sm leading-relaxed memo-content">{memo.content}</div>
+            <div
+              className="py-2 text-sm text-right underline cursor-pointer"
+              onClick={() => {
+                if (onNavigate) {
+                  onNavigate(`/${memo.name}`);
+                  handleCloseBtnClick();
+                }
+              }}
+            >
+              {"查看详情>>"}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
 };
 
-export default function showPreviewImageDialog(imgUrls: string[] | string, initialIndex?: number): void {
+export default function showPreviewImageDialog(
+  imgUrls: string[] | string,
+  initialIndex?: number,
+  memoName?: string,
+  // parentPage?: string,
+  onNavigate?: (route: string) => void,
+): void {
   generateDialog(
     {
       className: "preview-image-dialog",
@@ -186,6 +259,9 @@ export default function showPreviewImageDialog(imgUrls: string[] | string, initi
     {
       imgUrls: Array.isArray(imgUrls) ? imgUrls : [imgUrls],
       initialIndex: initialIndex || 0,
+      memoName: memoName,
+      // parentPage: parentPage,
+      onNavigate: onNavigate,
     },
   );
 }

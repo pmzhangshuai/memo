@@ -49,8 +49,21 @@ func (d *DB) ListMemos(ctx context.Context, find *store.FindMemo) ([]*store.Memo
 		where, args = append(where, "`memo`.`uid` = ?"), append(args, *v)
 	}
 	if v := find.CreatorID; v != nil {
-		where, args = append(where, "`memo`.`creator_id` = ?"), append(args, *v)
+		if find.IsFollow {
+			where = append(where, "`memo`.`creator_id` IN (SELECT `following_user_id` FROM `user_following` WHERE `user_id` = ?)")
+			args = append(args, *v)
+		} else {
+			where, args = append(where, "`memo`.`creator_id` = ?"), append(args, *v)
+		}
 	}
+	// if v := find.creatorIDs; v != nil {
+	// 	placeholders := make([]string, len(creatorIDs))
+	//         for i := range creatorIDs {
+	//             placeholders[i] = "?"
+	//             args = append(args, creatorIDs[i])
+	//         }
+	//         where = append(where, fmt.Sprintf("`memo`.`creator_id` IN (%s)", strings.Join(placeholders, ",")))
+	// }
 	if v := find.RowStatus; v != nil {
 		where, args = append(where, "`memo`.`row_status` = ?"), append(args, *v)
 	}
@@ -88,6 +101,12 @@ func (d *DB) ListMemos(ctx context.Context, find *store.FindMemo) ([]*store.Memo
 				where, args = append(where, "(JSON_EXTRACT(`memo`.`payload`, '$.tags') LIKE ? OR JSON_EXTRACT(`memo`.`payload`, '$.tags') LIKE ?)"), append(args, fmt.Sprintf(`%%"%s"%%`, tag), fmt.Sprintf(`%%"%s/%%`, tag))
 			}
 		}
+		// if v.Visibility != "" {
+		// 	// log.Printf("visibility-after: %s\n", v.Visibility.String())
+		// 	// log.Printf("visibility-before: %s\n", v.Visibility)
+		// 	where = append(where, "JSON_EXTRACT(`memo`.`payload`, '$.visibility') = ?")
+		// 	args = append(args, v.Visibility.String())
+		// }
 		if v.HasLink {
 			where = append(where, "JSON_EXTRACT(`memo`.`payload`, '$.property.hasLink') IS TRUE")
 		}

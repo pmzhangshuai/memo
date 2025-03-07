@@ -1,0 +1,33 @@
+
+// CreateChannel creates a new channel. type is the type of channel. name is the name of the user.
+
+// ListChannals lists all the channels.
+
+// CreateMessage creates a message.
+  rpc CreateMessage(CreateMessageRequest) returns (Memo) {
+    option (google.api.http) = {
+      post: "/api/v1/messages"
+      body: "message"
+    };
+  }
+
+// ListMessages lists all the messages. // status is the status of the message.
+rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=channels/*}/messages"};
+    option (google.api.method_signature) = "parent";
+  }
+
+// CreateMemoMessage creates a message for a message memo.
+  rpc CreateMemoMessage(CreateMemoMessageRequest) returns (Memo) {
+    option (google.api.http) = {
+      post: "/api/v1/{name=memos/*}/messages"
+      body: "message"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListMemoMessages lists messages for a message memo.
+  //rpc ListMemoMessages(ListMemoMessagesRequest) returns (ListMemoMessagesResponse) {
+  //  option (google.api.http) = {get: "/api/v1/{name=memos/*}/messages"};
+  //  option (google.api.method_signature) = "name";
+  //}

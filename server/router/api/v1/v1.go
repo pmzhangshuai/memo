@@ -106,12 +106,21 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	if err := v1pb.RegisterIdentityProviderServiceHandler(ctx, gwMux, conn); err != nil {
 		return err
 	}
+
+	// 自定义 CORS 配置
+	// corsConfig := middleware.CORSConfig{
+	// 	AllowOrigins: []string{"http://localhost:3001"},
+	// 	AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
+	// 	// 根据需要添加其他配置，如 AllowHeaders、AllowCredentials 等
+	// }
 	gwGroup := echoServer.Group("")
 	gwGroup.Use(middleware.CORS())
+	// gwGroup.Use(middleware.CORSWithConfig(corsConfig))
 	handler := echo.WrapHandler(gwMux)
 
 	gwGroup.Any("/api/v1/*", handler)
 	gwGroup.Any("/file/*", handler)
+	gwGroup.Any("/u/*", handler)
 
 	// GRPC web proxy.
 	options := []grpcweb.Option{

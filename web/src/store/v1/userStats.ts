@@ -20,16 +20,26 @@ export const useUserStatsStore = create(
   combine(getDefaultState(), (set, get) => ({
     setState: (state: State) => set(state),
     getState: () => get(),
-    listUserStats: async (user?: string) => {
+    listUserStats: async (user?: string, userList?: string[]) => {
+      // console.log("listUserStats:", user);
+      // console.log("listUserListStats:", userList);
       const userStatsByName: Record<string, UserStats> = {};
-      if (!user) {
+      if (!user && !userList) {
+        // 如果既没有单个用户也没有用户列表，则获取所有用户的状态
         const { userStats } = await userServiceClient.listAllUserStats({});
         for (const stats of userStats) {
           userStatsByName[stats.name] = stats;
         }
+      } else if (userList) {
+        // 如果有用户列表，则遍历列表获取每个用户的状态
+        for (const userName of userList) {
+          const userStats = await userServiceClient.getUserStats({ name: userName });
+          userStatsByName[userName] = userStats;
+        }
       } else {
-        const userStats = await userServiceClient.getUserStats({ name: user });
-        userStatsByName[user] = userStats;
+        // 如果有单个用户，则获取该用户的状态
+        const userStats = await userServiceClient.getUserStats({ name: user! });
+        userStatsByName[user!] = userStats;
       }
       set({ ...get(), userStatsByName });
     },

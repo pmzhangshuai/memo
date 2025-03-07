@@ -3,24 +3,25 @@ import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router-dom";
+import { useWorkspaceSettingStore } from "@/store/v1";
+import { WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { getSystemColorScheme } from "./helpers/utils";
-import useNavigateTo from "./hooks/useNavigateTo";
+import useCurrentUser from "./hooks/useCurrentUser";
 import { userStore, workspaceStore } from "./store/v2";
+import { User_Role } from "./types/proto/api/v1/user_service";
 
 const App = observer(() => {
   const { i18n } = useTranslation();
-  const navigateTo = useNavigateTo();
   const { mode, setMode } = useColorScheme();
-  const workspaceProfile = workspaceStore.state.profile;
   const userSetting = userStore.state.userSetting;
   const workspaceGeneralSetting = workspaceStore.generalSetting;
 
   // Redirect to sign up page if no instance owner.
-  useEffect(() => {
-    if (!workspaceProfile.owner) {
-      navigateTo("/auth/signup");
-    }
-  }, [workspaceProfile.owner]);
+  // useEffect(() => {
+  //   if (!workspaceProfile.owner) {
+  //     navigateTo("/auth/signup");
+  //   }
+  // }, [workspaceProfile.owner]);
 
   useEffect(() => {
     const darkMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -107,6 +108,25 @@ const App = observer(() => {
       appearance: userSetting.appearance || workspaceStore.state.appearance,
     });
   }, [userSetting?.locale, userSetting?.appearance]);
+
+  // Fetch Memo related settings.
+  const workspaceSettingStore = useWorkspaceSettingStore();
+  useEffect(() => {
+    // Initial fetch for workspace settings.
+    const user = useCurrentUser();
+    // console.log("current user:", user);
+    if (user && user.name) {
+      (async () => {
+        await workspaceSettingStore.fetchWorkspaceSetting(WorkspaceSettingKey.MEMO_RELATED);
+        if (user.role === User_Role.HOST) {
+          await workspaceSettingStore.fetchWorkspaceSetting(WorkspaceSettingKey.STORAGE);
+        }
+        // console.log("页面已加载");
+      })();
+    } else {
+      return;
+    }
+  }, []);
 
   return <Outlet />;
 });

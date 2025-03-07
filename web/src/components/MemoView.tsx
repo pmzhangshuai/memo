@@ -35,6 +35,7 @@ interface Props {
   showPinned?: boolean;
   className?: string;
   parentPage?: string;
+  onAutoInput?: (action: string, memoName: string) => void;
 }
 
 const MemoView: React.FC<Props> = (props: Props) => {
@@ -80,12 +81,32 @@ const MemoView: React.FC<Props> = (props: Props) => {
 
   const handleMemoContentClick = useCallback(async (e: React.MouseEvent) => {
     const targetEl = e.target as HTMLElement;
-
+    // console.log("tagName:", targetEl.tagName);
+    // console.log("childNodes:", targetEl.childNodes);
+    // console.log("textContent:", targetEl.textContent?.trim());
     if (targetEl.tagName === "IMG") {
       const imgUrl = targetEl.getAttribute("src");
       if (imgUrl) {
         showPreviewImageDialog([imgUrl], 0);
       }
+      // } else if (
+      //   targetEl.tagName === "VIDEO" ||
+      //   targetEl.tagName === "AUDIO" ||
+      //   targetEl.tagName === "INPUT" ||
+      //   targetEl.tagName === "svg" ||
+      //   targetEl.tagName === "SPAN" ||
+      //   targetEl.tagName === "CODE"
+      // ) {
+      //   return;
+      // } else if (targetEl.tagName === "A") {
+      //   const url = targetEl.getAttribute("href");
+      //   if (url) {
+      //     window.open(url, "_blank");
+      //   }
+      // } else {
+      // Array.from(targetEl.childNodes).findIndex(
+      //   (childNode) => childNode.nodeType === Node.TEXT_NODE && childNode.textContent?.trim() !== "",
+      // ) === -1 && handleGotoMemoDetailPage();
     }
   }, []);
 
@@ -186,8 +207,8 @@ const MemoView: React.FC<Props> = (props: Props) => {
                 )}
                 {currentUser && !isArchived && <ReactionSelector className="w-auto h-auto border-none" memo={memo} />}
               </div>
-              {/* workspaceMemoRelatedSetting.enableComment || commentAmount > 0 */}
-              {!isInMemoDetailPage && (true || commentAmount > 0) && (
+              {/* workspaceMemoRelatedSetting.enableComment 是否允许评论 */}
+              {!isInMemoDetailPage && (workspaceMemoRelatedSetting.enableComment || commentAmount > 0) && (
                 <Link
                   className={cn(
                     "flex flex-row justify-start items-center hover:opacity-70",
@@ -210,10 +231,16 @@ const MemoView: React.FC<Props> = (props: Props) => {
                   </span>
                 </Tooltip>
               )}
-              <MemoActionMenu className="-ml-1" memo={memo} readonly={readonly} onEdit={() => setShowEditor(true)} />
+              <MemoActionMenu
+                className="-ml-1"
+                memo={memo}
+                readonly={readonly}
+                onEdit={() => setShowEditor(true)}
+                onAutoInput={props.onAutoInput}
+              />
             </div>
           </div>
-          {/* props.compact && workspaceMemoRelatedSetting.enableAutoCompact */}
+          {/* workspaceMemoRelatedSetting.enableAutoCompact 是否自动折叠 */}
           <MemoContent
             key={`${memo.name}-${memo.updateTime}`}
             memoName={memo.name}
@@ -221,7 +248,7 @@ const MemoView: React.FC<Props> = (props: Props) => {
             readonly={readonly}
             onClick={handleMemoContentClick}
             onDoubleClick={handleMemoContentDoubleClick}
-            compact={props.compact && true}
+            compact={props.compact && workspaceMemoRelatedSetting.enableAutoCompact}
             parentPage={parentPage}
           />
           {memo.location && <MemoLocationView location={memo.location} />}

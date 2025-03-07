@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -56,8 +57,14 @@ func (d *DB) ListMemos(ctx context.Context, find *store.FindMemo) ([]*store.Memo
 	if v := find.UID; v != nil {
 		where, args = append(where, "`memo`.`uid` = ?"), append(args, *v)
 	}
+	log.Printf("Exporting memos with CreatorID: %v", find.CreatorID)
 	if v := find.CreatorID; v != nil {
-		where, args = append(where, "`memo`.`creator_id` = ?"), append(args, *v)
+		if find.IsFollow {
+			where = append(where, "`memo`.`creator_id` IN (SELECT `following_user_id` FROM `user_following` WHERE `user_id` = ?)")
+			args = append(args, *v)
+		} else {
+			where, args = append(where, "`memo`.`creator_id` = ?"), append(args, *v)
+		}
 	}
 	if v := find.RowStatus; v != nil {
 		where, args = append(where, "`memo`.`row_status` = ?"), append(args, *v)

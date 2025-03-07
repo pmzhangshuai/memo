@@ -1,8 +1,9 @@
 import { Divider, Option, Select } from "@mui/joy";
 import { observer } from "mobx-react-lite";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { userStore } from "@/store/v2";
 import { Visibility } from "@/types/proto/api/v1/memo_service";
-import { UserSetting } from "@/types/proto/api/v1/user_service";
+import { UserSetting, User_Role } from "@/types/proto/api/v1/user_service";
 import { useTranslate } from "@/utils/i18n";
 import { convertVisibilityFromString, convertVisibilityToString } from "@/utils/memo";
 import AppearanceSelect from "../AppearanceSelect";
@@ -41,6 +42,9 @@ const PreferencesSection = observer(() => {
     );
   };
 
+  const user = useCurrentUser();
+  const isHost = user.role === User_Role.HOST;
+
   return (
     <div className="flex flex-col w-full gap-2 pt-2 pb-4">
       <p className="font-medium text-gray-700 dark:text-gray-500">{t("common.basic")}</p>
@@ -65,14 +69,14 @@ const PreferencesSection = observer(() => {
             }
           }}
         >
-          {[Visibility.PRIVATE, Visibility.PUBLIC]
+          {[Visibility.PUBLIC, Visibility.PRIVATE]
             .map((v) => convertVisibilityToString(v))
             .map((item) => (
               <Option key={item} value={item} className="whitespace-nowrap">
                 {t(`memo.visibility.${item.toLowerCase() as Lowercase<typeof item>}`)}
               </Option>
             ))}
-            {/* {[Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
+          {/* {[Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
             .map((v) => convertVisibilityToString(v))
             .map((item) => (
               <Option key={item} value={item} className="whitespace-nowrap">
@@ -81,10 +85,7 @@ const PreferencesSection = observer(() => {
             ))} */}
         </Select>
       </div>
-
-      {/* <Divider className="!my-3" />
-
-      <WebhookSection /> */}
+      {isHost && <WebhookSection />}
     </div>
   );
 });

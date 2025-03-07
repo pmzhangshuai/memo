@@ -1,9 +1,9 @@
 import useWindowSize from "react-use/lib/useWindowSize";
 
 enum TailwindResponsiveWidth {
-  sm = 640,
-  md = 768,
-  lg = 1024,
+  sm = 640, // Mobile
+  md = 768, // Tablet
+  lg = 1024, // Laptop
 }
 
 const useResponsiveWidth = () => {

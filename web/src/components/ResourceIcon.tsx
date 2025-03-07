@@ -15,11 +15,13 @@ import { cn } from "@/utils";
 import { getResourceType, getResourceUrl } from "@/utils/resource";
 import showPreviewImageDialog from "./PreviewImageDialog";
 import SquareDiv from "./kit/SquareDiv";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   resource: Resource;
   className?: string;
   strokeWidth?: number;
+  // parentPage?: string;
 }
 
 const ResourceIcon = (props: Props) => {
@@ -33,13 +35,19 @@ const ResourceIcon = (props: Props) => {
     window.open(resourceUrl);
   };
 
+  // const parentPage = props.parentPage || location.pathname;
+  const navigateTo = useNavigate();
+  const handleNavigate = (route: string) => {
+    // 执行导航操作，例如使用 useNavigate 钩子
+    navigateTo(route);
+  };
   if (resourceType === "image/*") {
     return (
       <SquareDiv className={cn(className, "flex items-center justify-center overflow-clip")}>
         <img
-          className="min-w-full min-h-full object-cover"
+          className="object-cover min-w-full min-h-full"
           src={resource.externalLink ? resourceUrl : resourceUrl + "?thumbnail=true"}
-          onClick={() => showPreviewImageDialog(resourceUrl)}
+          onClick={() => showPreviewImageDialog(resourceUrl, undefined, resource.memo, handleNavigate)}
           decoding="async"
           loading="lazy"
         />

@@ -1,5 +1,5 @@
 import { isEqual } from "lodash-es";
-import { CalendarIcon, CheckCircleIcon, CodeIcon, EyeIcon, HashIcon, LinkIcon, SearchIcon, XIcon } from "lucide-react";
+import { CalendarIcon, CheckCircleIcon, CodeIcon, EyeIcon, HashIcon, LinkIcon, PaperclipIcon, SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FilterFactor, getMemoFilterKey, MemoFilter, parseFilterQuery, stringifyFilters, useMemoFilterStore } from "@/store/v1";
@@ -9,12 +9,14 @@ const MemoFilters = () => {
   const memoFilterStore = useMemoFilterStore();
   const filters = memoFilterStore.filters;
   const orderByTimeAsc = memoFilterStore.orderByTimeAsc;
+  const orderByComment = memoFilterStore.orderByComment;
+  const orderByReactions = memoFilterStore.orderByReactions;
   const lastUpdateRef = useRef<"url" | "store">("url");
 
   // set lastUpdateRef to store when filters or orderByTimeAsc changes
   useEffect(() => {
     lastUpdateRef.current = "store";
-  }, [filters, orderByTimeAsc]);
+  }, [filters, orderByTimeAsc, orderByComment, orderByReactions]);
 
   // set lastUpdateRef to url when searchParams changes
   useEffect(() => {
@@ -23,8 +25,10 @@ const MemoFilters = () => {
 
   const checkAndSync = () => {
     const filtersInURL = searchParams.get("filter") || "";
-    const orderByTimeAscInURL = searchParams.get("orderBy") === "asc";
-    const storeMatchesURL = filtersInURL === stringifyFilters(filters) && orderByTimeAscInURL === orderByTimeAsc;
+    const orderByTimeAscInURL = searchParams.get("orderByTime") === "asc";
+    const orderByCommentInURL = searchParams.get("orderByComment") === "asc" ? "asc" : searchParams.get("orderByComment") === "desc" ? "desc" : "default";
+    const orderByReactionsInURL = searchParams.get("orderByReactions") === "asc" ? "asc" : searchParams.get("orderByReactions") === "desc" ? "desc" : "default";
+    const storeMatchesURL = filtersInURL === stringifyFilters(filters) && orderByTimeAscInURL === orderByTimeAsc && orderByCommentInURL === orderByComment && orderByReactionsInURL === orderByReactions;
 
     if (!storeMatchesURL) {
       if (lastUpdateRef.current === "url") {
@@ -32,15 +36,33 @@ const MemoFilters = () => {
         memoFilterStore.setState({
           filters: parseFilterQuery(filtersInURL),
           orderByTimeAsc: orderByTimeAscInURL,
+          orderByComment: orderByCommentInURL,
+          orderByReactions: orderByReactionsInURL,
         });
       } else if (lastUpdateRef.current === "store") {
         // Sync Store -> URL
         const newSearchParams = new URLSearchParams(searchParams);
 
         if (orderByTimeAsc) {
-          newSearchParams.set("orderBy", "asc");
+          newSearchParams.set("orderByTime", "asc");
         } else {
-          newSearchParams.delete("orderBy");
+          newSearchParams.delete("orderByTime");
+        }
+
+        if (orderByComment === "asc") {
+          newSearchParams.set("orderByComment", "asc");
+        } else if (orderByComment === "desc") {
+          newSearchParams.set("orderByComment", "desc");
+        } else {
+          newSearchParams.delete("orderByComment");
+        }
+
+        if (orderByReactions === "asc") {
+          newSearchParams.set("orderByReactions", "asc");
+        } else if (orderByReactions === "desc") {
+          newSearchParams.set("orderByReactions", "desc");
+        } else {
+          newSearchParams.delete("orderByReactions");
         }
 
         if (filters.length > 0) {
@@ -55,7 +77,7 @@ const MemoFilters = () => {
   };
 
   // Watch both URL and store changes
-  useEffect(checkAndSync, [searchParams, filters, orderByTimeAsc]);
+  useEffect(checkAndSync, [searchParams, filters, orderByTimeAsc, orderByComment, orderByReactions]);
 
   const getFilterDisplayText = (filter: MemoFilter) => {
     if (filter.value) {
@@ -63,7 +85,7 @@ const MemoFilters = () => {
     }
     if (filter.factor.startsWith("property.")) {
       return filter.factor.replace("property.", "");
-    }
+    } 
     return filter.factor;
   };
 
@@ -99,6 +121,7 @@ const FactorIcon = ({ factor, className }: { factor: FilterFactor; className?: s
     "property.hasLink": <LinkIcon className={className} />,
     "property.hasTaskList": <CheckCircleIcon className={className} />,
     "property.hasCode": <CodeIcon className={className} />,
+    resources: <PaperclipIcon className={className} />,
   };
   return iconMap[factor as keyof typeof iconMap] || <></>;
 };

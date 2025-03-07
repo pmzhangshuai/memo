@@ -1,9 +1,13 @@
 package v1
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -109,6 +113,9 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		}
 		memoFind.CreatorID = &userID
 		memoFind.OrderByPinned = true
+	}
+	if request.IsFollow {
+		memoFind.IsFollow = true
 	}
 	if request.State == v1pb.State_ARCHIVED {
 		state := store.Archived
@@ -417,6 +424,111 @@ func (s *APIV1Service) DeleteMemo(ctx context.Context, request *v1pb.DeleteMemoR
 
 	return &emptypb.Empty{}, nil
 }
+
+func (s *APIV1Service) ExportMemos(ctx context.Context, request *v1pb.ExportMemosRequest) (*v1pb.ExportMemosResponse, error) {
+	normalRowStatus := store.Normal
+	memoFind := &store.FindMemo{
+		RowStatus: &normalRowStatus,
+		// Exclude comments by default.
+		ExcludeComments: true,
+	}
+	// log.Printf("Exporting memos with filter: %v", request.Filter)
+	if err := s.buildMemoFindWithFilter(ctx, memoFind, request.Filter); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to build find memos with filter: %v", err)
+	}
+
+	// log.Printf("Exporting memos with filter CreatorID: %v", memoFind.CreatorID)
+	// log.Printf("Exporting memos with filter ExcludeComments: %v", memoFind.ExcludeComments)
+	memos, err := s.Store.ListMemos(ctx, memoFind)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list memos: %v", err)
+	}
+
+	buf := new(bytes.Buffer)
+	writer := zip.NewWriter(buf)
+	for _, memo := range memos {
+		memoMessage, err := s.convertMemoFromStore(ctx, memo)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to convert memo")
+		}
+		// file, err := writer.Create(time.Unix(memo.CreatedTs, 0).Format(time.RFC3339) + "-" + memo.UID + "-" + string(memo.Visibility) + ".md")
+		// if err != nil {
+		// 	return nil, status.Errorf(codes.Internal, "Failed to create memo file")
+		// }
+
+		// 获取创建时间
+		createTime := time.Unix(memo.CreatedTs, 0)
+		year := createTime.Format("2006")
+		month := createTime.Format("01")
+		day := createTime.Format("02")
+		hour := createTime.Format("15")
+		minute := createTime.Format("04")
+		second := createTime.Format("05")
+
+		// Get the first 200 characters or less of the content before the first newline
+		contentPrefix := getMemoContentPrefix(memoMessage.Content)
+		// 定义正则表达式，匹配所有特殊字符
+		re := regexp.MustCompile(`[<>"\\/:|?*]`)
+		// 替换特殊字符
+		santizeTitle := re.ReplaceAllString(contentPrefix, "-")
+		// log.Printf("santizeTitle: %v", santizeTitle)
+
+		// Construct the file name
+		fileName := fmt.Sprintf("%s%s%s_%s%s%s_%s_%s.md", year, month, day, hour, minute, second, santizeTitle, memo.Visibility)
+
+		// 创建文件夹路径：年/月
+		folderPath := fmt.Sprintf("%s/%s/", year, month)
+
+		// 创建文件夹（如果不存在）
+		_, err = writer.Create(folderPath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to create folder: %v", err)
+		}
+
+		// 创建文件
+		file, err := writer.Create(folderPath + fileName)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to create memo file")
+		}
+		_, err = file.Write([]byte(memoMessage.Content))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to write to memo file")
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to close zip file writer")
+	}
+
+	return &v1pb.ExportMemosResponse{
+		Content: buf.Bytes(),
+	}, nil
+}
+
+// Helper function to get the first 200 characters or less of the content before the first newline
+func getMemoContentPrefix(content string) string {
+	const prefixLimit = 200
+	if idx := strings.Index(content, "\n"); idx != -1 && idx < prefixLimit {
+		return content[:idx]
+	}
+	if len(content) > prefixLimit {
+		return content[:prefixLimit]
+	}
+	// log.Printf("contentPrefix: %v", content)
+	// santizeContent := sanitizeFileName(content)
+	// log.Printf("santizeContent: %v", santizeContent)
+	return content
+}
+
+// 清理文件名中的特殊字符
+// func sanitizeFileName(fileName string) string {
+// 	// 替换或删除特殊字符
+// 	return strings.Map(func(r rune) rune {
+// 		if unicode.IsPunct(r) || unicode.IsSymbol(r) || unicode.IsSpace(r) || r == '/' {
+// 			return '_' // 替换为下划线
+// 		}
+// 		return r
+// 	}, fileName)
+// }
 
 func (s *APIV1Service) CreateMemoComment(ctx context.Context, request *v1pb.CreateMemoCommentRequest) (*v1pb.Memo, error) {
 	memoUID, err := ExtractMemoUIDFromName(request.Name)

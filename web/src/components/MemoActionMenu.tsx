@@ -10,23 +10,32 @@ import {
   MoreVerticalIcon,
   TrashIcon,
   SquareCheckIcon,
+  LinkIcon,
+  SquareArrowOutUpRight,
+  Forward,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 import { markdownServiceClient } from "@/grpcweb";
+import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import useNavigateTo from "@/hooks/useNavigateTo";
-import { useMemoStore, useUserStatsStore } from "@/store/v1";
-import { State } from "@/types/proto/api/v1/common";
+import useResponsiveWidth from "@/hooks/useResponsiveWidth";
+import { extractMemoIdFromName, extractMemoIdFromName2, useMemoStore, useUserStatsStore } from "@/store/v1";
+import { State, Direction } from "@/types/proto/api/v1/common";
 import { NodeType } from "@/types/proto/api/v1/markdown_service";
 import { Memo } from "@/types/proto/api/v1/memo_service";
 import { cn } from "@/utils";
 import { useTranslate } from "@/utils/i18n";
+import showCreateMemoDialog from "./CreateMemoDialog";
+import showShareMemoDialog from "./ShareMemoDialog";
 
 interface Props {
   memo: Memo;
   readonly?: boolean;
   className?: string;
   onEdit?: () => void;
+  onAutoInput?: (action: string, memoName: string) => void;
 }
 
 const checkHasCompletedTaskList = (memo: Memo) => {
@@ -49,6 +58,7 @@ const MemoActionMenu = (props: Props) => {
   const navigateTo = useNavigateTo();
   const memoStore = useMemoStore();
   const userStatsStore = useUserStatsStore();
+  const currentUser = useCurrentUser();
   const isArchived = memo.state === State.ARCHIVED;
   const hasCompletedTaskList = checkHasCompletedTaskList(memo);
   const isInMemoDetailPage = location.pathname.startsWith(`/${memo.name}`);
@@ -118,6 +128,16 @@ const MemoActionMenu = (props: Props) => {
     toast.success(t("message.succeed-copy-link"));
   };
 
+  const handleMarkAndForward = (action: string) => {
+    if (props.onAutoInput) {
+      // console.log("当前是在 Home 组件");
+      props.onAutoInput(action, memo.name);
+    } else {
+      // console.log("弹出对话框");
+      showCreateMemoDialog(action, memo.name);
+    }
+  };
+
   const handleDeleteMemoClick = async () => {
     const confirmed = window.confirm(t("memo.delete-confirm"));
     if (confirmed) {
@@ -162,6 +182,23 @@ const MemoActionMenu = (props: Props) => {
     }
   };
 
+  const responsiveWidth = useResponsiveWidth();
+  const handleShare = () => {
+    // console.log("handleShare");
+    // const response = await memoStore.fetchMemos({
+    //   parent: memo.creator,
+    //   isFollow: false,
+    //   state: State.NORMAL,
+    //   direction: Direction.DESC,
+    //   filter: "",
+    //   oldFilter: "",
+    //   pageSize: DEFAULT_LIST_MEMOS_PAGE_SIZE,
+    //   pageToken: "",
+    // });
+    // console.log("response:", response);
+    showShareMemoDialog(memo.name, responsiveWidth);
+  };
+
   return (
     <Dropdown>
       <MenuButton slots={{ root: "div" }}>
@@ -180,13 +217,29 @@ const MemoActionMenu = (props: Props) => {
               <Edit3Icon className="w-4 h-auto" />
               {t("common.edit")}
             </MenuItem>
+            <MenuItem onClick={() => handleMarkAndForward("mark")}>
+              <LinkIcon className="w-4 h-auto" />
+              {t("common.mark")}
+            </MenuItem>
           </>
         )}
-        {!isArchived && (
-          <MenuItem onClick={handleCopyLink}>
-            <CopyIcon className="w-4 h-auto" />
-            {t("memo.copy-link")}
+        {readonly && currentUser && (
+          <MenuItem onClick={() => handleMarkAndForward("forward")}>
+            <Forward className="w-4 h-auto" />
+            {t("memo.forward")}
           </MenuItem>
+        )}
+        {!isArchived && (
+          <>
+            <MenuItem onClick={handleShare}>
+              <SquareArrowOutUpRight className="w-4 h-auto" />
+              {t("common.share")}
+            </MenuItem>
+            {/* <MenuItem onClick={handleCopyLink}>
+              <CopyIcon className="w-4 h-auto" />
+              {t("memo.copy-link")}
+            </MenuItem> */}
+          </>
         )}
         {!readonly && (
           <>
@@ -200,10 +253,12 @@ const MemoActionMenu = (props: Props) => {
               {isArchived ? <ArchiveRestoreIcon className="w-4 h-auto" /> : <ArchiveIcon className="w-4 h-auto" />}
               {isArchived ? t("common.restore") : t("common.archive")}
             </MenuItem>
-            <MenuItem color="danger" onClick={handleDeleteMemoClick}>
-              <TrashIcon className="w-4 h-auto" />
-              {t("common.delete")}
-            </MenuItem>
+            {isArchived && (
+              <MenuItem color="danger" onClick={handleDeleteMemoClick}>
+                <TrashIcon className="w-4 h-auto" />
+                {t("common.delete")}
+              </MenuItem>
+            )}
           </>
         )}
       </Menu>

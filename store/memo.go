@@ -62,6 +62,7 @@ type FindMemo struct {
 	// Standard fields
 	RowStatus       *RowStatus
 	CreatorID       *int32
+	IsFollow        bool
 	CreatedTsAfter  *int64
 	CreatedTsBefore *int64
 	UpdatedTsAfter  *int64
@@ -87,6 +88,7 @@ type FindMemo struct {
 
 type FindMemoPayload struct {
 	Raw                *string
+	Visibility         Visibility
 	TagSearch          []string
 	HasLink            bool
 	HasTaskList        bool

@@ -2,8 +2,10 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/usememos/memos/store"
 )
@@ -53,13 +55,31 @@ func (d *DB) UpdateUser(ctx context.Context, update *store.UpdateUser) (*store.U
 	if v := update.Description; v != nil {
 		set, args = append(set, "description = ?"), append(args, *v)
 	}
+	if v := update.Gender; v != nil {
+		set, args = append(set, "gender = ?"), append(args, *v)
+	}
+	if v := update.BirthDate; v != nil {
+		set, args = append(set, "birth_date = ?"), append(args, *v)
+	}
+	if v := update.Location; v != nil {
+		set, args = append(set, "location = ?"), append(args, *v)
+	}
+	if v := update.Industry; v != nil {
+		set, args = append(set, "industry = ?"), append(args, *v)
+	}
+	if v := update.Occupation; v != nil {
+		set, args = append(set, "occupation = ?"), append(args, *v)
+	}
+	if v := update.University; v != nil {
+		set, args = append(set, "university = ?"), append(args, *v)
+	}
 	args = append(args, update.ID)
 
 	query := `
 		UPDATE user
 		SET ` + strings.Join(set, ", ") + `
 		WHERE id = ?
-		RETURNING id, username, role, email, nickname, password_hash, avatar_url, description, created_ts, updated_ts, row_status
+		RETURNING id, username, role, email, nickname, password_hash, avatar_url, description, gender, birth_date, location, industry, occupation, university, created_ts, updated_ts, row_status
 	`
 	user := &store.User{}
 	if err := d.db.QueryRowContext(ctx, query, args...).Scan(
@@ -71,6 +91,12 @@ func (d *DB) UpdateUser(ctx context.Context, update *store.UpdateUser) (*store.U
 		&user.PasswordHash,
 		&user.AvatarURL,
 		&user.Description,
+		&user.Gender,
+		&user.BirthDate,
+		&user.Location,
+		&user.Industry,
+		&user.Occupation,
+		&user.University,
 		&user.CreatedTs,
 		&user.UpdatedTs,
 		&user.RowStatus,
@@ -111,6 +137,12 @@ func (d *DB) ListUsers(ctx context.Context, find *store.FindUser) ([]*store.User
 			password_hash,
 			avatar_url,
 			description,
+			gender,
+			birth_date,
+			location,
+			industry,
+			occupation,
+			university,
 			created_ts,
 			updated_ts,
 			row_status
@@ -129,6 +161,7 @@ func (d *DB) ListUsers(ctx context.Context, find *store.FindUser) ([]*store.User
 	list := make([]*store.User, 0)
 	for rows.Next() {
 		var user store.User
+		var birthDate sql.NullTime // 使用 sql.NullTime 来暂存 birth_date
 		if err := rows.Scan(
 			&user.ID,
 			&user.Username,
@@ -138,12 +171,34 @@ func (d *DB) ListUsers(ctx context.Context, find *store.FindUser) ([]*store.User
 			&user.PasswordHash,
 			&user.AvatarURL,
 			&user.Description,
+			&user.Gender,
+			&birthDate,
+			&user.Location,
+			&user.Industry,
+			&user.Occupation,
+			&user.University,
 			&user.CreatedTs,
 			&user.UpdatedTs,
 			&user.RowStatus,
 		); err != nil {
 			return nil, err
 		}
+
+		// 将 sql.NullTime 转换为 *time.Time
+		if birthDate.Valid {
+			user.BirthDate = birthDate.Time
+		} else {
+			// 定义时间格式和时间字符串
+			layout := "Mon Jan 02 15:04:05 MST 2006"
+			timeStr := "Mon Jan 01 0001 08:05:43 GMT+0805"
+			// 解析时间字符串
+			parsedTime, err := time.Parse(layout, timeStr)
+			if err != nil {
+				fmt.Println("Error parsing time:", err)
+			}
+			user.BirthDate = parsedTime
+		}
+
 		list = append(list, &user)
 	}
 

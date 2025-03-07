@@ -18,7 +18,7 @@ const TagsSection = (props: Props) => {
   const t = useTranslate();
   const memoFilterStore = useMemoFilterStore();
   const userStatsStore = useUserStatsStore();
-  const [treeMode, setTreeMode] = useLocalStorage<boolean>("tag-view-as-tree", false);
+  const [treeMode, setTreeMode] = useLocalStorage<boolean>("tag-view-as-tree", true);
   const tags = Object.entries(useUserStatsTags())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .sort((a, b) => b[1] - a[1]);
@@ -48,17 +48,17 @@ const TagsSection = (props: Props) => {
   };
 
   return (
-    <div className="flex flex-col justify-start items-start w-full mt-3 px-1 h-auto shrink-0 flex-nowrap hide-scrollbar">
-      <div className="flex flex-row justify-between items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none">
-        <span>{t("common.tags")}</span>
+    <div className="flex flex-col items-start justify-start w-full h-auto px-1 mt-3 shrink-0 flex-nowrap hide-scrollbar">
+      <div className="flex flex-row items-center justify-between w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none">
+        <span>{t("common.tags") + `(${tags.length})`}</span>
         {tags.length > 0 && (
           <Popover>
             <PopoverTrigger>
-              <MoreVerticalIcon className="w-4 h-auto shrink-0 opacity-60" />
+              <MoreVerticalIcon className="w-4 h-auto shrink-0 opacity-60 hover:text-gray-800 dark:hover:text-gray-100" />
             </PopoverTrigger>
             <PopoverContent align="end" alignOffset={-12}>
-              <div className="w-auto flex flex-row justify-between items-center gap-2">
-                <span className="text-sm shrink-0">Tree mode</span>
+              <div className="flex flex-row items-center justify-between w-auto gap-2">
+                <span className="text-sm shrink-0">{t("common.tag-tree")}</span>
                 <Switch size="sm" checked={treeMode} onChange={(event) => setTreeMode(event.target.checked)} />
               </div>
             </PopoverContent>
@@ -69,17 +69,17 @@ const TagsSection = (props: Props) => {
         treeMode ? (
           <TagTree tagAmounts={tags} />
         ) : (
-          <div className="w-full flex flex-row justify-start items-center relative flex-wrap gap-x-2 gap-y-1">
+          <div className="relative flex flex-row flex-wrap items-center justify-start w-full gap-x-2 gap-y-1">
             {tags.map(([tag, amount]) => (
               <div
                 key={tag}
-                className="shrink-0 w-auto max-w-full text-sm rounded-md leading-6 flex flex-row justify-start items-center select-none hover:opacity-80 text-gray-600 dark:text-gray-400 dark:border-zinc-800"
+                className="flex flex-row items-center justify-start w-auto max-w-full text-sm leading-6 text-gray-600 rounded-md select-none shrink-0 hover:opacity-80 dark:text-gray-400 dark:border-zinc-800"
               >
                 <Dropdown>
                   <MenuButton slots={{ root: "div" }}>
                     <div className="shrink-0 group">
-                      <HashIcon className="group-hover:hidden w-4 h-auto shrink-0 opacity-40" />
-                      <MoreVerticalIcon className="hidden group-hover:block w-4 h-auto shrink-0 opacity-60" />
+                      <HashIcon className="w-4 h-auto group-hover:hidden shrink-0 opacity-40" />
+                      <MoreVerticalIcon className="hidden w-4 h-auto group-hover:block shrink-0 opacity-60" />
                     </div>
                   </MenuButton>
                   <Menu size="sm" placement="bottom-start">
@@ -106,7 +106,7 @@ const TagsSection = (props: Props) => {
         )
       ) : (
         !props.readonly && (
-          <div className="p-2 border border-dashed dark:border-zinc-800 rounded-md flex flex-row justify-start items-start gap-1 text-gray-400 dark:text-gray-500">
+          <div className="flex flex-row items-start justify-start gap-1 p-2 text-gray-400 border border-dashed rounded-md dark:border-zinc-800 dark:text-gray-500">
             <TagsIcon />
             <p className="mt-0.5 text-sm leading-snug italic">{t("tag.create-tags-guide")}</p>
           </div>

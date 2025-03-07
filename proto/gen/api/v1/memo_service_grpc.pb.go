@@ -25,6 +25,7 @@ const (
 	MemoService_GetMemo_FullMethodName            = "/memos.api.v1.MemoService/GetMemo"
 	MemoService_UpdateMemo_FullMethodName         = "/memos.api.v1.MemoService/UpdateMemo"
 	MemoService_DeleteMemo_FullMethodName         = "/memos.api.v1.MemoService/DeleteMemo"
+	MemoService_ExportMemos_FullMethodName        = "/memos.api.v1.MemoService/ExportMemos"
 	MemoService_RenameMemoTag_FullMethodName      = "/memos.api.v1.MemoService/RenameMemoTag"
 	MemoService_DeleteMemoTag_FullMethodName      = "/memos.api.v1.MemoService/DeleteMemoTag"
 	MemoService_SetMemoResources_FullMethodName   = "/memos.api.v1.MemoService/SetMemoResources"
@@ -52,6 +53,8 @@ type MemoServiceClient interface {
 	UpdateMemo(ctx context.Context, in *UpdateMemoRequest, opts ...grpc.CallOption) (*Memo, error)
 	// DeleteMemo deletes a memo.
 	DeleteMemo(ctx context.Context, in *DeleteMemoRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ExportMemos exports memos.
+	ExportMemos(ctx context.Context, in *ExportMemosRequest, opts ...grpc.CallOption) (*ExportMemosResponse, error)
 	// RenameMemoTag renames a tag for a memo.
 	RenameMemoTag(ctx context.Context, in *RenameMemoTagRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// DeleteMemoTag deletes a tag for a memo.
@@ -128,6 +131,16 @@ func (c *memoServiceClient) DeleteMemo(ctx context.Context, in *DeleteMemoReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, MemoService_DeleteMemo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *memoServiceClient) ExportMemos(ctx context.Context, in *ExportMemosRequest, opts ...grpc.CallOption) (*ExportMemosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportMemosResponse)
+	err := c.cc.Invoke(ctx, MemoService_ExportMemos_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -258,6 +271,8 @@ type MemoServiceServer interface {
 	UpdateMemo(context.Context, *UpdateMemoRequest) (*Memo, error)
 	// DeleteMemo deletes a memo.
 	DeleteMemo(context.Context, *DeleteMemoRequest) (*emptypb.Empty, error)
+	// ExportMemos exports memos.
+	ExportMemos(context.Context, *ExportMemosRequest) (*ExportMemosResponse, error)
 	// RenameMemoTag renames a tag for a memo.
 	RenameMemoTag(context.Context, *RenameMemoTagRequest) (*emptypb.Empty, error)
 	// DeleteMemoTag deletes a tag for a memo.
@@ -304,6 +319,9 @@ func (UnimplementedMemoServiceServer) UpdateMemo(context.Context, *UpdateMemoReq
 }
 func (UnimplementedMemoServiceServer) DeleteMemo(context.Context, *DeleteMemoRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteMemo not implemented")
+}
+func (UnimplementedMemoServiceServer) ExportMemos(context.Context, *ExportMemosRequest) (*ExportMemosResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExportMemos not implemented")
 }
 func (UnimplementedMemoServiceServer) RenameMemoTag(context.Context, *RenameMemoTagRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenameMemoTag not implemented")
@@ -445,6 +463,24 @@ func _MemoService_DeleteMemo_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MemoServiceServer).DeleteMemo(ctx, req.(*DeleteMemoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MemoService_ExportMemos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportMemosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemoServiceServer).ExportMemos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MemoService_ExportMemos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemoServiceServer).ExportMemos(ctx, req.(*ExportMemosRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -673,6 +709,10 @@ var MemoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteMemo",
 			Handler:    _MemoService_DeleteMemo_Handler,
+		},
+		{
+			MethodName: "ExportMemos",
+			Handler:    _MemoService_ExportMemos_Handler,
 		},
 		{
 			MethodName: "RenameMemoTag",

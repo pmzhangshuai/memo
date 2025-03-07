@@ -99,18 +99,21 @@ const ActivityCalendar = (props: Props) => {
 
         return (
           <Tooltip className="shrink-0" key={`${date}-${index}`} title={tooltipText} placement="top" arrow>
-            <div
-              className={cn(
-                "w-6 h-6 text-xs lg:text-[13px] flex justify-center items-center cursor-default",
-                "rounded-lg border-2 text-gray-400",
-                item.isCurrentMonth && getCellAdditionalStyles(count, maxCount),
-                item.isCurrentMonth && isToday && "border-zinc-400",
-                item.isCurrentMonth && isSelected && "font-medium border-zinc-400",
-                item.isCurrentMonth && !isToday && !isSelected && "border-transparent",
-              )}
-              onClick={() => count && onClick && onClick(date)}
-            >
-              {item.day}
+            <div className="relative">
+              <div
+                className={cn(
+                  "w-6 h-6 text-xs lg:text-[13px] rounded-md flex justify-center items-center cursor-default",
+                  "border-[1px] text-gray-400",
+                  item.isCurrentMonth && "bg-gray-100 dark:bg-gray-800",
+                  item.isCurrentMonth && getCellAdditionalStyles(count, maxCount),
+                  item.isCurrentMonth && isToday && "border-primary",
+                  item.isCurrentMonth && isSelected && "font-medium border-primary",
+                  item.isCurrentMonth && !isToday && !isSelected && "border-transparent",
+                )}
+                onClick={() => count && onClick && onClick(date)}
+              >
+                {item.day}
+              </div>
             </div>
           </Tooltip>
         );

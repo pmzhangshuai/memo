@@ -89,6 +89,9 @@ func (s *RSSService) GetUserRSS(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate rss").SetInternal(err)
 	}
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationXMLCharsetUTF8)
+	// 设置 CORS 头部
+	// c.Response().Header().Set("Access-Control-Allow-Origin", "http://localhost:3001")
+	// c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 	return c.String(http.StatusOK, rss)
 }
 

@@ -2,7 +2,7 @@ import { uniqueId } from "lodash-es";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { memoServiceClient } from "@/grpcweb";
-import { CreateMemoRequest, ListMemosRequest, Memo } from "@/types/proto/api/v1/memo_service";
+import { CreateMemoRequest, ExportMemosRequest, ListMemosRequest, Memo } from "@/types/proto/api/v1/memo_service";
 
 interface State {
   // stateId is used to identify the store instance state.
@@ -104,6 +104,9 @@ export const useMemoStore = create(
       const memoMap = get().memoMapByName;
       delete memoMap[name];
       set({ stateId: uniqueId(), memoMapByName: memoMap });
+    },
+    ExportMemos: async (request: ExportMemosRequest) => {
+      return await memoServiceClient.ExportMemos(request);
     },
   })),
 );

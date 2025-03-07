@@ -1,12 +1,14 @@
-import { Textarea } from "@mui/joy";
+import { Textarea, Select, Option } from "@mui/joy";
 import { Button, Input } from "@usememos/mui";
 import { isEqual } from "lodash-es";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { authServiceClient } from "@/grpcweb";
 import { convertFileToBase64 } from "@/helpers/utils";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useUserStore, useWorkspaceSettingStore } from "@/store/v1";
+import { userStore } from "@/store/v2";
 import { User as UserPb } from "@/types/proto/api/v1/user_service";
 import { WorkspaceGeneralSetting, WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { useTranslate } from "@/utils/i18n";
@@ -21,6 +23,12 @@ interface State {
   nickname: string;
   email: string;
   description: string;
+  gender: string;
+  birthDate: Date;
+  location: string;
+  industry: string;
+  occupation: string;
+  university: string;
 }
 
 const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
@@ -33,12 +41,21 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
     nickname: currentUser.nickname,
     email: currentUser.email,
     description: currentUser.description,
+    gender: currentUser.gender ?? "Other",
+    birthDate:
+      currentUser.birthDate && currentUser.birthDate >= new Date(1901, 0, 1)
+        ? currentUser.birthDate
+        : (currentUser.createTime ?? new Date()),
+    location: currentUser.location,
+    industry: currentUser.industry,
+    occupation: currentUser.occupation,
+    university: currentUser.university,
   });
   const workspaceSettingStore = useWorkspaceSettingStore();
   const workspaceGeneralSetting =
     workspaceSettingStore.getWorkspaceSettingByKey(WorkspaceSettingKey.GENERAL)?.generalSetting || WorkspaceGeneralSetting.fromPartial({});
 
-  const handleCloseBtnClick = () => {
+  const handleCloseBtnClick = async () => {
     destroy();
   };
 
@@ -101,6 +118,61 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
     });
   };
 
+  const handleGenderChanged = (event: React.SyntheticEvent | null, newValue: string | null) => {
+    // console.log("GenderChanged:", newValue);
+    setState((state) => {
+      return {
+        ...state,
+        gender: newValue ?? "Other",
+      };
+    });
+  };
+
+  const handleBirthDateChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => {
+      return {
+        ...state,
+        birthDate: new Date(e.target.value),
+      };
+    });
+  };
+
+  const handleLocationChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => {
+      return {
+        ...state,
+        location: e.target.value as string,
+      };
+    });
+  };
+
+  const handleIndustryChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => {
+      return {
+        ...state,
+        industry: e.target.value as string,
+      };
+    });
+  };
+
+  const handleOccupationChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => {
+      return {
+        ...state,
+        occupation: e.target.value as string,
+      };
+    });
+  };
+
+  const handleUniversityChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => {
+      return {
+        ...state,
+        university: e.target.value as string,
+      };
+    });
+  };
+
   const handleSaveBtnClick = async () => {
     if (state.username === "") {
       toast.error(t("message.fill-all"));
@@ -124,6 +196,26 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
       if (!isEqual(currentUser.description, state.description)) {
         updateMask.push("description");
       }
+      if (!isEqual(currentUser.gender, state.gender)) {
+        updateMask.push("gender");
+      }
+      if (!isEqual(currentUser.birthDate, state.birthDate)) {
+        updateMask.push("birth_date");
+      }
+      if (!isEqual(currentUser.location, state.location)) {
+        updateMask.push("location");
+      }
+      if (!isEqual(currentUser.industry, state.industry)) {
+        updateMask.push("industry");
+      }
+      if (!isEqual(currentUser.occupation, state.occupation)) {
+        updateMask.push("occupation");
+      }
+      if (!isEqual(currentUser.university, state.university)) {
+        updateMask.push("university");
+      }
+      // console.log("original user:", currentUser);
+      // console.log("update user:", state);
       await userStore.updateUser(
         UserPb.fromPartial({
           name: currentUser.name,
@@ -132,10 +224,17 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
           email: state.email,
           avatarUrl: state.avatarUrl,
           description: state.description,
+          gender: state.gender,
+          birthDate: state.birthDate,
+          location: state.location,
+          industry: state.industry,
+          occupation: state.occupation,
+          university: state.university,
         }),
         updateMask,
       );
       toast.success(t("message.update-succeed"));
+      // console.log("update user succeed:", currentUser);
       handleCloseBtnClick();
     } catch (error: any) {
       console.error(error);
@@ -151,12 +250,12 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
-      <div className="dialog-content-container space-y-2">
-        <div className="w-full flex flex-row justify-start items-center">
-          <span className="text-sm mr-2">{t("common.avatar")}</span>
+      <div className="space-y-2 overflow-y-scroll dialog-content-container" style={{ maxHeight: "70vh" }}>
+        <div className="flex flex-row items-center justify-start w-full">
+          <span className="mr-2 text-sm">{t("common.avatar")}</span>
           <label className="relative cursor-pointer hover:opacity-80">
             <UserAvatar className="!w-10 !h-10" avatarUrl={state.avatarUrl} />
-            <input type="file" accept="image/*" className="absolute invisible w-full h-full inset-0" onChange={handleAvatarChanged} />
+            <input type="file" accept="image/*" className="absolute inset-0 invisible w-full h-full" onChange={handleAvatarChanged} />
           </label>
           {state.avatarUrl && (
             <XIcon
@@ -171,7 +270,7 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
         </div>
         <p className="text-sm">
           {t("common.username")}
-          <span className="text-sm text-gray-400 ml-1">({t("setting.account-section.username-note")})</span>
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.username-note")})</span>
         </p>
         <Input
           className="w-full"
@@ -181,7 +280,7 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
         />
         <p className="text-sm">
           {t("common.nickname")}
-          <span className="text-sm text-gray-400 ml-1">({t("setting.account-section.nickname-note")})</span>
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.nickname-note")})</span>
         </p>
         <Input
           className="w-full"
@@ -191,26 +290,61 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
         />
         <p className="text-sm">
           {t("common.email")}
-          <span className="text-sm text-gray-400 ml-1">({t("setting.account-section.email-note")})</span>
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
         </p>
         <Input fullWidth type="email" value={state.email} onChange={handleEmailChanged} />
-        <p className="text-sm">{t("common.description")}</p>
-        <Textarea
+        <p className="text-sm">
+          {t("common.gender")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Select
+          size="md"
           className="w-full"
-          color="neutral"
-          minRows={2}
-          maxRows={4}
-          value={state.description}
-          onChange={handleDescriptionChanged}
-        />
-        <div className="w-full flex flex-row justify-end items-center pt-4 space-x-2">
-          <Button variant="plain" onClick={handleCloseBtnClick}>
-            {t("common.cancel")}
-          </Button>
-          <Button color="primary" onClick={handleSaveBtnClick}>
-            {t("common.save")}
-          </Button>
-        </div>
+          placeholder={t("common.select-placeholder")}
+          defaultValue={state.gender}
+          onChange={handleGenderChanged}
+        >
+          <Option value="Other">{t("common.gender-other")}</Option>
+          <Option value="Male">{t("common.gender-male")}</Option>
+          <Option value="Female">{t("common.gender-female")}</Option>
+        </Select>
+        {/* <Input fullWidth value={state.gender} onChange={handleGenderChanged} /> */}
+        <p className="text-sm">
+          {t("common.birthDate")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Input type="date" fullWidth value={state.birthDate.toISOString().split("T")[0]} onChange={handleBirthDateChanged} />
+        <p className="text-sm">
+          {t("common.location")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Input fullWidth value={state.location} onChange={handleLocationChanged} />
+        <p className="text-sm">
+          {t("common.industry")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Input fullWidth value={state.industry} onChange={handleIndustryChanged} />
+        <p className="text-sm">
+          {t("common.occupation")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Input fullWidth value={state.occupation} onChange={handleOccupationChanged} />
+        <p className="text-sm">
+          {t("common.university")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Input fullWidth value={state.university} onChange={handleUniversityChanged} />
+        <p className="text-sm">
+          {t("common.description")}
+          <span className="ml-1 text-sm text-gray-400">({t("setting.account-section.email-note")})</span>
+        </p>
+        <Textarea className="w-full" size="md" minRows={2} maxRows={4} value={state.description} onChange={handleDescriptionChanged} />
+      </div>
+      <div className="flex flex-row items-center justify-end w-full pt-4 space-x-2">
+        <Button onClick={handleCloseBtnClick}>{t("common.cancel")}</Button>
+        <Button color="primary" onClick={handleSaveBtnClick}>
+          {t("common.save")}
+        </Button>
       </div>
     </>
   );

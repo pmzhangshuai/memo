@@ -1,0 +1,37 @@
+.tab {
+  > .tab-button-active {
+    position: relative;
+    // font-size: 20px;
+    // line-height: 1.5;
+    // margin: 20px 0;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 15px;
+      right: 15px;
+      height: 10px; /* 背景条的高度 */
+      background-color: #c2d9ff; /* 半透明 */
+      bottom: 10px; /* 调整位置，使其部分覆盖文字 */
+      z-index: -1; /* 确保背景条在文字下方 */
+    }
+  }
+
+  > .tab-button-active-dark {
+    position: relative;
+    // font-size: 20px;
+    // line-height: 1.5;
+    // margin: 20px 0;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 15px;
+      right: 15px;
+      height: 10px; /* 背景条的高度 */
+      background-color: #2d7eff; /* 半透明 */
+      bottom: 10px; /* 调整位置，使其部分覆盖文字 */
+      z-index: -1; /* 确保背景条在文字下方 */
+    }
+  }
+}

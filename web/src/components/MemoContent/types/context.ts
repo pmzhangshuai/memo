@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { Dispatch, SetStateAction, createContext } from "react";
 import { Node } from "@/types/proto/api/v1/markdown_service";
 
 interface Context {
@@ -9,6 +9,7 @@ interface Context {
   memoName?: string;
   readonly?: boolean;
   disableFilter?: boolean;
+  // setDisableFilter?: Dispatch<SetStateAction<boolean | undefined>>;
   parentPage?: string;
 }
 

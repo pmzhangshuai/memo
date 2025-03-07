@@ -49,6 +49,10 @@ const RootLayout = () => {
     setCollapsed((prev) => !prev);
   };
 
+  const expandSidebar = (status: boolean) => {
+    setCollapsed(status);
+  };
+
   return !initialized ? (
     <Loading />
   ) : (
@@ -63,7 +67,7 @@ const RootLayout = () => {
               "hover-show-text", // 用于悬停显示文字
             )}
           >
-            <Navigation collapsed={collapsed} />
+            <Navigation collapsed={collapsed} setCollapsed={expandSidebar} />
             <div className="flex items-center justify-center mt-auto mb-5">
               {collapsed ? (
                 <Tooltip title={t("common.expand")} placement="right" arrow>

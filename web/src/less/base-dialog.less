@@ -1,11 +1,20 @@
 .dialog-wrapper {
-  @apply fixed top-0 left-0 flex flex-col justify-start items-center w-full h-full pt-16 pb-8 px-4 z-1000 overflow-x-hidden overflow-y-scroll bg-transparent transition-all hide-scrollbar bg-black bg-opacity-60;
+  @apply fixed top-0 left-0 flex flex-col justify-start items-center w-full h-full pt-16 pb-8 px-4 z-1000 overflow-x-hidden overflow-y-hidden bg-transparent transition-all hide-scrollbar bg-black bg-opacity-60;
 
   > .dialog-container {
     @apply max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg;
 
+    // 设置最大高度为视口高度（100vh），并启用垂直滚动条
+    // max-height: 100vh;
+    // overflow-y: auto;
+
     > .dialog-header-container {
       @apply flex flex-row justify-between items-center w-full mb-4;
+
+      // 定义一个新的类用于覆盖 margin-bottom
+      &.mb-0-override {
+        @apply mb-0;
+      }
 
       > .title-text {
         > .icon-text {

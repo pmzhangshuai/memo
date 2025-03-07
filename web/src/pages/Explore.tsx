@@ -1,14 +1,22 @@
 import dayjs from "dayjs";
-import { useMemo, useState } from "react";
+import { t } from "i18next";
+import { Settings } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import Empty from "@/components/Empty";
 import { ExploreSidebar, ExploreSidebarDrawer } from "@/components/ExploreSidebar";
+import showFollowedUsersDialog from "@/components/FollowedUsersDialog";
 import MemoView from "@/components/MemoView";
 import MobileHeader from "@/components/MobileHeader";
 import PagedMemoList from "@/components/PagedMemoList";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import useNavigateTo from "@/hooks/useNavigateTo";
 import useResponsiveWidth from "@/hooks/useResponsiveWidth";
-import { useMemoFilterStore } from "@/store/v1";
+import { useMemoFilterStore, useUserStatsStore, useUserStore } from "@/store/v1";
 import { Direction, State } from "@/types/proto/api/v1/common";
 import { Memo } from "@/types/proto/api/v1/memo_service";
+import { FollowingListResponse, User } from "@/types/proto/api/v1/user_service";
 import { cn } from "@/utils";
 
 const Explore = () => {
@@ -51,9 +59,65 @@ const Explore = () => {
   // 添加状态来管理当前选中的 Tab
   const [activeTab, setActiveTab] = useState("default"); // 'default' 或 'subscriptions'
 
+  const userStatsStore = useUserStatsStore();
   // 切换 Tab 的函数
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Refresh user stats.
+    // userStatsStore.setStateId();
+  };
+
+  // const [followedUsers, setFollowedUsers] = useState<User[]>([]);
+  const [isFetched, setISFetched] = useState(false);
+  const [followedUserNames, setFollowedUserNames] = useState<string[]>([]);
+  const userStore = useUserStore();
+  // const fetchFollowedUsers = async () => {
+  //   const users = await userStore.getFollowingList(user.name);
+  //   setFollowedUsers(users.users);
+  //   setISFetched(true);
+  // };
+  useEffect(() => {
+    if (activeTab === "default") {
+      // console.log("列出所有用户的状态");
+      userStatsStore.listUserStats();
+    } else if (activeTab === "subscriptions") {
+      if (user && user.name && !isFetched) {
+        userStore
+          .getFollowingList(user.name)
+          .then((followedUsersResult) => {
+            setFollowedUserNames(followedUsersResult.users.map((user) => user.name));
+          })
+          .catch((error) => {
+            // 处理错误，例如显示错误消息
+            console.error("Failed to fetch followed users:", error);
+          });
+        setISFetched(true);
+      } else if (!user) {
+        // console.log("用户未登录，关注列表为空");
+        userStatsStore.listUserStats(undefined, followedUserNames);
+      }
+    }
+  }, [user, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "subscriptions" && isFetched) {
+      // console.log("列出关注用户的状态");
+      userStatsStore.listUserStats(undefined, followedUserNames);
+    }
+  }, [activeTab, followedUserNames, isFetched]);
+
+  const handleFollowing = () => {
+    if (user && user.name) {
+      showFollowedUsersDialog(user, handleNavigate);
+    } else {
+      toast.error(t("message.no-login-status"));
+    }
+  };
+
+  const navigateTo = useNavigate();
+  const handleNavigate = (route: string) => {
+    // 执行导航操作，例如使用 useNavigate 钩子
+    navigateTo(route);
   };
 
   // 根据 activeTab 渲染不同的内容
@@ -61,6 +125,56 @@ const Explore = () => {
     if (activeTab === "default") {
       // 渲染当前 Memo 列表
       return (
+        <PagedMemoList
+          renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showCreator showVisibility compact />}
+          listSort={(memos: Memo[]) => {
+            let sortedMemos = memos.filter(
+              (memo) =>
+                memo.state === State.NORMAL &&
+                memoFilterStore.filters.every((filter) => {
+                  if (filter.factor === "visibility") {
+                    return memo.visibility === filter.value;
+                  } else if (filter.factor === "resources") {
+                    return memo.resources.length > 0;
+                  } else {
+                    return true;
+                  }
+                }),
+            );
+            sortedMemos =
+              memoFilterStore.orderByComment === "asc" || memoFilterStore.orderByComment === "desc"
+                ? sortedMemos.sort((a, b) => {
+                    // 计算 memo a 中 type 为 COMMENT 的 relations 数量
+                    const commentCountA = a.relations.filter((relation) => relation.type === "COMMENT").length;
+                    // 计算 memo b 中 type 为 COMMENT 的 relations 数量
+                    const commentCountB = b.relations.filter((relation) => relation.type === "COMMENT").length;
+                    return memoFilterStore.orderByComment === "asc"
+                      ? commentCountA - commentCountB // 升序
+                      : commentCountB - commentCountA; // 降序
+                  })
+                : memoFilterStore.orderByReactions === "asc" || memoFilterStore.orderByReactions === "desc"
+                  ? sortedMemos.sort((a, b) => {
+                      const reactionsLengthA = a.reactions.length;
+                      const reactionsLengthB = b.reactions.length;
+                      return memoFilterStore.orderByReactions === "asc"
+                        ? reactionsLengthA - reactionsLengthB // 升序
+                        : reactionsLengthB - reactionsLengthA; // 降序
+                    })
+                  : sortedMemos.sort((a, b) =>
+                      memoFilterStore.orderByTimeAsc
+                        ? dayjs(a.displayTime).unix() - dayjs(b.displayTime).unix()
+                        : dayjs(b.displayTime).unix() - dayjs(a.displayTime).unix(),
+                    );
+            sortedMemos = sortedMemos.sort((a, b) => Number(b.pinned) - Number(a.pinned));
+            return sortedMemos;
+          }}
+          direction={memoFilterStore.orderByTimeAsc ? Direction.ASC : Direction.DESC}
+          oldFilter={memoListFilter}
+        />
+      );
+    } else if (activeTab === "subscriptions") {
+      // 渲染已关注用户发布的 Memo 列表
+      return user ? (
         <PagedMemoList
           renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showCreator showVisibility compact />}
           listSort={(memos: Memo[]) =>
@@ -72,18 +186,16 @@ const Explore = () => {
                   : dayjs(b.displayTime).unix() - dayjs(a.displayTime).unix(),
               )
           }
+          owner={user.name}
+          isFollow={true}
           direction={memoFilterStore.orderByTimeAsc ? Direction.ASC : Direction.DESC}
           oldFilter={memoListFilter}
         />
-      );
-    } else if (activeTab === "subscriptions") {
-      // 渲染已关注用户发布的 Memo 列表
-      // 这里需要获取已关注用户的 Memo 列表，可能需要调用 API 或使用其他状态管理
-      // 为了示例，这里只是返回一个空列表或占位符
-      return (
-        <div>Subscribed Memos will go here...</div>
-        // 或者调用一个获取订阅 Memo 的组件/函数
-        // <SubscribedMemoList />
+      ) : (
+        <div className="flex flex-col items-center justify-center w-full mt-12 mb-8 italic">
+          <Empty />
+          <p className="mt-2 text-gray-600 dark:text-gray-400">{t("message.no-data")}</p>
+        </div>
       );
     }
     return null;
@@ -97,6 +209,39 @@ const Explore = () => {
         </MobileHeader>
       )}
       <div className={cn("w-full min-h-full flex flex-row justify-start items-start")}>
+        <div className={cn("w-full mx-auto px-4 sm:px-6 sm:pt-3 md:pt-6 pb-8", md && "max-w-3xl")}>
+          <div className="flex flex-col items-start justify-start w-full max-w-full">
+            {/* 添加 Tab 按钮 */}
+            <div className="flex items-center justify-between w-full">
+              <div className="flex mb-4">
+                <button
+                  className={cn(
+                    "px-4 py-2 border-none", // 移除背景色，添加无边框样式
+                    activeTab === "default" ? "text-blue-500 font-bold" : "text-gray-500", // 选中时高亮，未选中时灰色
+                  )}
+                  onClick={() => handleTabChange("default")}
+                >
+                  默认
+                </button>
+                <button
+                  className={cn(
+                    "px-4 py-2 border-none", // 移除背景色，添加无边框样式
+                    activeTab === "subscriptions" ? "text-blue-500 font-bold" : "text-gray-500", // 选中时高亮，未选中时灰色
+                  )}
+                  onClick={() => handleTabChange("subscriptions")}
+                >
+                  订阅
+                </button>
+              </div>
+              {activeTab === "subscriptions" && (
+                <div className="px-4 py-2 mb-4" onClick={handleFollowing}>
+                  <Settings className="w-5 h-auto text-gray-500 hover:opacity-70" />
+                </div>
+              )}
+            </div>
+            {renderMemoList()}
+          </div>
+        </div>
         {md && (
           <div
             className={cn(
@@ -108,32 +253,6 @@ const Explore = () => {
             <ExploreSidebar className={cn("py-6")} />
           </div>
         )}
-        <div className={cn("w-full mx-auto px-4 sm:px-6 sm:pt-3 md:pt-6 pb-8", md && "max-w-3xl")}>
-          <div className="flex flex-col items-start justify-start w-full max-w-full">
-            {/* 添加 Tab 按钮 */}
-            <div className="flex mb-4">
-              <button
-                className={cn(
-                  "px-4 py-2 border-none", // 移除背景色，添加无边框样式
-                  activeTab === "default" ? "text-blue-500 font-bold" : "text-gray-500" // 选中时高亮，未选中时灰色
-                )}
-                onClick={() => handleTabChange("default")}
-              >
-                默认
-              </button>
-              <button
-                className={cn(
-                  "px-4 py-2 border-none", // 移除背景色，添加无边框样式
-                  activeTab === "subscriptions" ? "text-blue-500 font-bold" : "text-gray-500" // 选中时高亮，未选中时灰色
-                )}
-                onClick={() => handleTabChange("subscriptions")}
-              >
-                订阅
-              </button>
-            </div>
-            {renderMemoList()}
-          </div>
-        </div>
       </div>
     </section>
   );

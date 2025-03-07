@@ -6,6 +6,7 @@ import workspaceStore from "./workspace";
 
 class LocalState {
   currentUser?: string;
+  currentFollowing?: number;
   userSetting?: UserSetting;
   shortcuts: Shortcut[] = [];
   inboxes: Inbox[] = [];
@@ -22,6 +23,24 @@ class LocalState {
 
 const userStore = (() => {
   const state = new LocalState();
+
+  const initCurrentFollowing = (count: number) => {
+    state.setPartial({
+      currentFollowing: count,
+    });
+  };
+
+  const unFollowUser = () => {
+    state.setPartial({
+      currentFollowing: state.currentFollowing! - 1,
+    });
+  };
+
+  const followUser = () => {
+    state.setPartial({
+      currentFollowing: state.currentFollowing! + 1,
+    });
+  };
 
   const getOrFetchUserByName = async (name: string) => {
     const userMap = state.userMapByName;
@@ -51,6 +70,7 @@ const userStore = (() => {
         [updatedUser.name]: updatedUser,
       },
     });
+    return updatedUser;
   };
 
   const updateUserSetting = async (userSetting: Partial<UserSetting>, updateMask: string[]) => {
@@ -108,6 +128,9 @@ const userStore = (() => {
     fetchShortcuts,
     fetchInboxes,
     updateInbox,
+    initCurrentFollowing,
+    followUser,
+    unFollowUser,
   };
 })();
 

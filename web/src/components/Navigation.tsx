@@ -21,10 +21,11 @@ interface NavLinkItem {
 interface Props {
   collapsed?: boolean;
   className?: string;
+  setCollapsed?: (status: boolean) => void;
 }
 
 const Navigation = observer((props: Props) => {
-  const { collapsed, className } = props;
+  const { collapsed, className, setCollapsed } = props;
   const t = useTranslate();
   const user = useCurrentUser();
   const hasUnreadInbox = userStore.state.inboxes.some((inbox) => inbox.status === Inbox_Status.UNREAD);
@@ -99,6 +100,12 @@ const Navigation = observer((props: Props) => {
     icon: <SmileIcon className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
+  const handleExploreClick = (status: boolean) => {
+    if (setCollapsed) {
+      setCollapsed(status);
+    }
+  };
+
   const navLinks: NavLinkItem[] = user
     ? [homeNavLink, exploreNavLink, inboxNavLink, profileNavLink, archivedNavLink, settingNavLink]
     : [exploreNavLink, signInNavLink, aboutNavLink];
@@ -124,6 +131,7 @@ const Navigation = observer((props: Props) => {
             }
             key={navLink.id}
             to={navLink.path}
+            // onClick={navLink.id === "header-home" ? () => handleExploreClick(true) : () => handleExploreClick(false)}
             id={navLink.id}
             viewTransition
           >

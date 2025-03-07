@@ -40,10 +40,10 @@ const WebhookSection = () => {
   };
 
   return (
-    <div className="w-full flex flex-col justify-start items-start">
-      <div className="w-full flex justify-between items-center">
+    <div className="flex flex-col items-start justify-start w-full mt-6">
+      <div className="flex items-center justify-between w-full">
         <div className="flex-auto space-y-1">
-          <p className="flex flex-row justify-start items-center font-medium text-gray-700 dark:text-gray-400">
+          <p className="flex flex-row items-center justify-start font-medium text-gray-700 dark:text-gray-400">
             {t("setting.webhook-section.title")}
           </p>
         </div>
@@ -58,16 +58,16 @@ const WebhookSection = () => {
           </Button>
         </div>
       </div>
-      <div className="w-full mt-2 flow-root">
+      <div className="flow-root w-full mt-2">
         <div className="overflow-x-auto">
-          <div className="inline-block min-w-full border rounded-lg align-middle dark:border-zinc-600">
+          <div className="inline-block min-w-full align-middle border rounded-lg dark:border-zinc-600">
             <table className="min-w-full divide-y divide-gray-300 dark:divide-zinc-600">
               <thead>
                 <tr>
-                  <th scope="col" className="px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
+                  <th scope="col" className="px-3 py-2 text-sm font-semibold text-left text-gray-900 dark:text-gray-400">
                     {t("common.name")}
                   </th>
-                  <th scope="col" className="px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
+                  <th scope="col" className="px-3 py-2 text-sm font-semibold text-left text-gray-900 dark:text-gray-400">
                     {t("setting.webhook-section.url")}
                   </th>
                   <th scope="col" className="relative px-3 py-2 pr-4">
@@ -78,11 +78,11 @@ const WebhookSection = () => {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-500">
                 {webhooks.map((webhook) => (
                   <tr key={webhook.id}>
-                    <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 dark:text-gray-400">{webhook.name}</td>
+                    <td className="px-3 py-2 text-sm text-gray-900 whitespace-nowrap dark:text-gray-400">{webhook.name}</td>
                     <td className="max-w-[200px] px-3 py-2 text-sm text-gray-900 dark:text-gray-400 truncate" title={webhook.url}>
                       {webhook.url}
                     </td>
-                    <td className="relative whitespace-nowrap px-3 py-2 text-right text-sm">
+                    <td className="relative px-3 py-2 text-sm text-right whitespace-nowrap">
                       <Button
                         variant="plain"
                         size="sm"
@@ -90,7 +90,7 @@ const WebhookSection = () => {
                           handleDeleteWebhook(webhook);
                         }}
                       >
-                        <TrashIcon className="text-red-600 w-4 h-auto" />
+                        <TrashIcon className="w-4 h-auto text-red-600" />
                       </Button>
                     </td>
                   </tr>
@@ -98,7 +98,7 @@ const WebhookSection = () => {
 
                 {webhooks.length === 0 && (
                   <tr>
-                    <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 dark:text-gray-400" colSpan={3}>
+                    <td className="px-3 py-2 text-sm text-gray-900 whitespace-nowrap dark:text-gray-400" colSpan={3}>
                       {t("setting.webhook-section.no-webhooks-found")}
                     </td>
                   </tr>
@@ -110,7 +110,7 @@ const WebhookSection = () => {
       </div>
       <div className="w-full mt-2">
         <Link
-          className="text-gray-500 text-sm inline-flex flex-row justify-start items-center hover:underline hover:text-blue-600"
+          className="inline-flex flex-row items-center justify-start text-sm text-gray-500 hover:underline hover:text-blue-600"
           to="https://usememos.com/docs/advanced-settings/webhook"
           target="_blank"
         >

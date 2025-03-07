@@ -54,7 +54,7 @@ const TagSelector = (props: Props) => {
                 return (
                   <div
                     key={tag}
-                    className="inline-flex w-auto max-w-full cursor-pointer text-base leading-6 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark"
+                    className="w-full text-base leading-6 text-gray-500 cursor-pointer dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark"
                     onClick={() => handleTagClick(tag)}
                   >
                     <OverflowTip>#{tag}</OverflowTip>
@@ -63,7 +63,7 @@ const TagSelector = (props: Props) => {
               })}
             </div>
           ) : (
-            <p className="italic mx-2" onClick={(e) => e.stopPropagation()}>
+            <p className="mx-2 italic" onClick={(e) => e.stopPropagation()}>
               {t("tag.no-tag-found")}
             </p>
           )}

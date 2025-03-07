@@ -446,7 +446,7 @@ func file_api_v1_auth_service_proto_init() {
 	if File_api_v1_auth_service_proto != nil {
 		return
 	}
-	file_api_v1_user_service_proto_init()
+	file_user_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

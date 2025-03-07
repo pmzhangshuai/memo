@@ -52,28 +52,24 @@ const RenameTagDialog: React.FC<Props> = (props: Props) => {
   return (
     <>
       <div className="dialog-header-container">
-        <p className="title-text">{"Rename tag"}</p>
+        <p className="title-text">{t("common.rename-tag")}</p>
         <Button size="sm" variant="plain" onClick={() => destroy()}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
-      <div className="dialog-content-container max-w-xs">
-        <div className="w-full flex flex-col justify-start items-start mb-3">
-          <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
-            <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">Old Name</span>
+      <div className="max-w-xs dialog-content-container">
+        <div className="flex flex-col items-start justify-start w-full mb-3">
+          <div className="relative flex flex-row items-center justify-start w-full mb-2 space-x-2">
+            <span className="w-20 text-sm text-right whitespace-nowrap shrink-0">{t("common.name-old")}</span>
             <Input className="w-full" readOnly disabled type="text" placeholder="A new tag name" value={tag} />
           </div>
-          <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
-            <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">New Name</span>
+          <div className="relative flex flex-row items-center justify-start w-full mb-2 space-x-2">
+            <span className="w-20 text-sm text-right whitespace-nowrap shrink-0">{t("common.name-new")}</span>
             <Input className="w-full" type="text" placeholder="A new tag name" value={newName} onChange={handleTagNameInputChange} />
           </div>
-          <List size="sm" marker="disc">
-            <ListItem>
-              <p className="leading-5">All your memos with this tag will be updated.</p>
-            </ListItem>
-          </List>
+          <p className="mt-2 text-sm leading-relaxed">{t("common.rename-tip")}</p>
         </div>
-        <div className="w-full flex flex-row justify-end items-center space-x-2">
+        <div className="flex flex-row items-center justify-end w-full space-x-2">
           <Button variant="plain" disabled={requestState.isLoading} onClick={destroy}>
             {t("common.cancel")}
           </Button>

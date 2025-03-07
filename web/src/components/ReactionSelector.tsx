@@ -1,4 +1,5 @@
-import { Dropdown, Menu, MenuButton } from "@mui/joy";
+import { Popper } from "@mui/base/Popper";
+import { Button, Dropdown, Menu, MenuButton, MenuList, styled } from "@mui/joy";
 import { SmilePlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import useClickAway from "react-use/lib/useClickAway";
@@ -15,23 +16,46 @@ interface Props {
   className?: string;
 }
 
+const Popup = styled(Popper)({
+  zIndex: 1000,
+});
+
 const ReactionSelector = (props: Props) => {
   const { memo, className } = props;
   const currentUser = useCurrentUser();
   const memoStore = useMemoStore();
   const workspaceSettingStore = useWorkspaceSettingStore();
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const workspaceMemoRelatedSetting =
     workspaceSettingStore.getWorkspaceSettingByKey(WorkspaceSettingKey.MEMO_RELATED)?.memoRelatedSetting ||
     WorkspaceMemoRelatedSetting.fromPartial({});
 
-  useClickAway(containerRef, () => {
-    setOpen(false);
-  });
+  // useClickAway(containerRef, () => {
+  //   setOpen(false);
+  // });
 
   const hasReacted = (reactionType: string) => {
     return memo.reactions.some((r) => r.reactionType === reactionType && r.creator === currentUser?.name);
+  };
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const modifiers = [
+    {
+      name: "offset",
+      options: {
+        offset: [0, 10],
+      },
+    },
+  ];
+  const isOnMenu = useRef(false);
+  const createHandleLeaveButton = () => {
+    setTimeout(() => {
+      if (!isOnMenu.current) {
+        setIsMenuOpen(false);
+      }
+    }, 200);
   };
 
   const handleReactionClick = async (reactionType: string) => {
@@ -56,39 +80,87 @@ const ReactionSelector = (props: Props) => {
     } catch (error) {
       // skip error.
     }
-    setOpen(false);
+    // setOpen(false);
   };
 
   return (
-    <Dropdown open={open} onOpenChange={(_, isOpen) => setOpen(isOpen)}>
-      <MenuButton slots={{ root: "div" }}>
-        <span
-          className={cn("h-7 w-7 flex justify-center items-center rounded-full border dark:border-zinc-700 hover:opacity-70", className)}
-        >
-          <SmilePlusIcon className="w-4 h-4 mx-auto text-gray-500 dark:text-gray-400" />
-        </span>
-      </MenuButton>
-      <Menu className="relative" component="div" size="sm" placement="bottom-start">
-        <div ref={containerRef}>
-          <div className="flex flex-row flex-wrap py-0.5 px-2 h-auto gap-1 max-w-56">
-            {workspaceMemoRelatedSetting.reactions.map((reactionType) => {
-              return (
-                <span
-                  key={reactionType}
-                  className={cn(
-                    "inline-flex w-auto text-base cursor-pointer rounded px-1 text-gray-500 dark:text-gray-400 hover:opacity-80",
-                    hasReacted(reactionType) && "bg-blue-100 dark:bg-zinc-800",
-                  )}
-                  onClick={() => handleReactionClick(reactionType)}
-                >
-                  {reactionType}
-                </span>
-              );
-            })}
+    <>
+      <span
+        className={cn("h-7 w-7 flex justify-center items-center rounded-full border dark:border-zinc-700 hover:opacity-70", className)}
+        onMouseEnter={(event) => {
+          setAnchorEl(event.currentTarget);
+          setIsMenuOpen(true);
+        }}
+        onMouseLeave={() => {
+          createHandleLeaveButton();
+        }}
+      >
+        <SmilePlusIcon className="w-4 h-4 mx-auto text-gray-500 dark:text-gray-400" />
+      </span>
+      <Popup
+        open={isMenuOpen}
+        anchorEl={anchorEl}
+        onMouseEnter={() => {
+          isOnMenu.current = true;
+        }}
+        onMouseLeave={() => {
+          setIsMenuOpen(false);
+          isOnMenu.current = false;
+        }}
+        placement="bottom-end"
+        modifiers={modifiers}
+      >
+        <MenuList className="relative" component="div" size="sm">
+          <div ref={containerRef}>
+            <div className="flex flex-row flex-wrap py-0.5 px-2 h-auto gap-1 max-w-56">
+              {workspaceMemoRelatedSetting.reactions.map((reactionType) => {
+                return (
+                  <span
+                    key={reactionType}
+                    className={cn(
+                      "inline-flex w-auto text-base cursor-pointer rounded px-1 text-gray-500 dark:text-gray-400 hover:opacity-80",
+                      hasReacted(reactionType) && "bg-blue-100 dark:bg-zinc-800",
+                    )}
+                    onClick={() => handleReactionClick(reactionType)}
+                  >
+                    {reactionType}
+                  </span>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </Menu>
-    </Dropdown>
+        </MenuList>
+      </Popup>
+      {/* <Dropdown open={open} onOpenChange={(_, isOpen) => setOpen(isOpen)}>
+        <MenuButton slots={{ root: "div" }}>
+          <span
+            className={cn("h-7 w-7 flex justify-center items-center rounded-full border dark:border-zinc-700 hover:opacity-70", className)}
+          >
+            <SmilePlusIcon className="w-4 h-4 mx-auto text-gray-500 dark:text-gray-400" />
+          </span>
+        </MenuButton>
+        <Menu className="relative" component="div" size="sm" placement="bottom-start">
+          <div ref={containerRef}>
+            <div className="flex flex-row flex-wrap py-0.5 px-2 h-auto gap-1 max-w-56">
+              {workspaceMemoRelatedSetting.reactions.map((reactionType) => {
+                return (
+                  <span
+                    key={reactionType}
+                    className={cn(
+                      "inline-flex w-auto text-base cursor-pointer rounded px-1 text-gray-500 dark:text-gray-400 hover:opacity-80",
+                      hasReacted(reactionType) && "bg-blue-100 dark:bg-zinc-800",
+                    )}
+                    onClick={() => handleReactionClick(reactionType)}
+                  >
+                    {reactionType}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </Menu>
+      </Dropdown> */}
+    </>
   );
 };
 

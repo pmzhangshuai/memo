@@ -26,6 +26,17 @@
       > img {
         @apply h-auto w-auto max-w-full max-h-full shadow;
       }
+
+      > div {
+        > .memo-content {
+          display: -webkit-box;
+          -webkit-line-clamp: 3; // 限制为3行
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: normal;
+        }
+      }
     }
   }
 }

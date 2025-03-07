@@ -14,6 +14,7 @@ export interface EditorRefActions {
   setContent: (text: string) => void;
   getContent: () => string;
   getSelectedContent: () => string;
+  setSelectedContent: (text: string) => void;
   getCursorPosition: () => number;
   setCursorPosition: (startPos: number, endPos?: number) => void;
   getCursorLineNumber: () => number;
@@ -112,6 +113,28 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
       const end = editorRef.current?.selectionEnd;
       return editorRef.current?.value.slice(start, end) ?? "";
     },
+    setSelectedContent: (newText: string) => {
+      if (!editorRef.current) {
+        return;
+      }
+  
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      const prevValue = editorRef.current.value;
+  
+      // 替换选中的文本为新文本
+      const value = prevValue.slice(0, start) + newText + prevValue.slice(end);
+      editorRef.current.value = value;
+  
+      // 将光标移动到新文本的末尾（如果需要）
+      const newCursorPosition = start + newText.length;
+      editorRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+      editorRef.current.focus();
+  
+      // 通知内容变化
+      handleContentChangeCallback(editorRef.current.value);
+      updateEditorHeight();
+    },
     setCursorPosition: (startPos: number, endPos?: number) => {
       const _endPos = isNaN(endPos as number) ? startPos : (endPos as number);
       editorRef.current?.setSelectionRange(startPos, _endPos);
@@ -190,7 +213,7 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
       className={cn("flex flex-col justify-start items-start relative w-full h-auto max-h-[50vh] bg-inherit dark:text-gray-300", className)}
     >
       <textarea
-        className="w-full h-full my-1 text-base resize-none overflow-x-hidden overflow-y-auto bg-transparent outline-none whitespace-pre-wrap word-break"
+        className="w-full h-full my-1 overflow-x-hidden overflow-y-auto text-base whitespace-pre-wrap bg-transparent outline-none resize-none word-break"
         rows={1}
         placeholder={placeholder}
         ref={editorRef}

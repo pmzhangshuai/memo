@@ -1,9 +1,11 @@
 import { Tooltip } from "@mui/joy";
+import type { Locale } from "date-fns";
+import zhCN from "date-fns/locale/zh-CN";
 import dayjs from "dayjs";
 import { countBy } from "lodash-es";
 import { CheckCircleIcon, ChevronRightIcon, ChevronLeftIcon, Code2Icon, LinkIcon, ListTodoIcon } from "lucide-react";
 import { useState } from "react";
-import DatePicker from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
 import i18n from "@/i18n";
@@ -17,14 +19,19 @@ const StatisticsView = () => {
   const t = useTranslate();
   const memoFilterStore = useMemoFilterStore();
   const userStatsStore = useUserStatsStore();
+  // 备忘录类型统计
   const [memoTypeStats, setMemoTypeStats] = useState<UserStats_MemoTypeStats>(UserStats_MemoTypeStats.fromPartial({}));
+  // 日期统计，键为日期字符串，值为数量
   const [activityStats, setActivityStats] = useState<Record<string, number>>({});
+  // 当前选择的日期
   const [selectedDate] = useState(new Date());
+  // 当前显示的月份字符串，格式为 YYYY-MM
   const [visibleMonthString, setVisibleMonthString] = useState(dayjs(selectedDate.toDateString()).format("YYYY-MM"));
 
   useAsyncEffect(async () => {
     const memoTypeStats = UserStats_MemoTypeStats.fromPartial({});
     const displayTimeList: Date[] = [];
+    // console.log("userStatsByName:", userStatsStore.userStatsByName);
     for (const stats of Object.values(userStatsStore.userStatsByName)) {
       displayTimeList.push(...stats.memoDisplayTimestamps);
       if (stats.memoTypeStats) {
@@ -45,6 +52,8 @@ const StatisticsView = () => {
 
   const currentMonth = dayjs(visibleMonthString).toDate();
 
+  registerLocale("zh-Hans", zhCN as unknown as Locale);
+
   return (
     <div className="w-full mt-3 space-y-1 text-gray-500 group dark:text-gray-400">
       <div className="flex flex-row items-center justify-between w-full gap-1 mb-1">
@@ -57,6 +66,7 @@ const StatisticsView = () => {
               }
             }}
             dateFormat="MMMM yyyy"
+            locale={i18n.language}
             showMonthYearPicker
             showFullMonthYearPicker
             customInput={

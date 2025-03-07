@@ -24,6 +24,12 @@ func (s *APIV1Service) buildMemoFindWithFilter(ctx context.Context, find *store.
 		if len(filterExpr.ContentSearch) > 0 {
 			find.ContentSearch = filterExpr.ContentSearch
 		}
+		// if filterExpr.Visibility != "" {
+		// 	find.PayloadFind.Visibility = filterExpr.Visibility
+		// }
+		if len(filterExpr.Visibilities) > 0 {
+			find.VisibilityList = filterExpr.Visibilities
+		}
 		if filterExpr.TagSearch != nil {
 			if find.PayloadFind == nil {
 				find.PayloadFind = &store.FindMemoPayload{}
@@ -52,6 +58,22 @@ func (s *APIV1Service) buildMemoFindWithFilter(ctx context.Context, find *store.
 				find.CreatedTsBefore = filterExpr.DisplayTimeBefore
 			}
 		}
+		if filterExpr.Creator != nil {
+			userID, err := ExtractUserIDFromName(*filterExpr.Creator)
+			if err != nil {
+				return errors.Wrap(err, "invalid user name")
+			}
+			user, err := s.Store.GetUser(ctx, &store.FindUser{
+				ID: &userID,
+			})
+			if err != nil {
+				return status.Errorf(codes.Internal, "failed to get user")
+			}
+			if user == nil {
+				return status.Errorf(codes.NotFound, "user not found")
+			}
+			find.CreatorID = &user.ID
+		}
 		if filterExpr.HasLink {
 			find.PayloadFind.HasLink = true
 		}
@@ -71,9 +93,12 @@ func (s *APIV1Service) buildMemoFindWithFilter(ctx context.Context, find *store.
 // MemoFilterCELAttributes are the CEL attributes.
 var MemoFilterCELAttributes = []cel.EnvOption{
 	cel.Variable("content_search", cel.ListType(cel.StringType)),
+	// cel.Variable("visibility", cel.StringType),
+	cel.Variable("visibilities", cel.ListType(cel.StringType)),
 	cel.Variable("tag_search", cel.ListType(cel.StringType)),
 	cel.Variable("display_time_before", cel.IntType),
 	cel.Variable("display_time_after", cel.IntType),
+	cel.Variable("creator", cel.StringType),
 	cel.Variable("has_link", cel.BoolType),
 	cel.Variable("has_task_list", cel.BoolType),
 	cel.Variable("has_code", cel.BoolType),
@@ -81,10 +106,13 @@ var MemoFilterCELAttributes = []cel.EnvOption{
 }
 
 type MemoFilter struct {
-	ContentSearch      []string
-	TagSearch          []string
+	ContentSearch []string
+	TagSearch     []string
+	// Visibility         store.Visibility
+	Visibilities       []store.Visibility
 	DisplayTimeBefore  *int64
 	DisplayTimeAfter   *int64
+	Creator            *string
 	HasLink            bool
 	HasTaskList        bool
 	HasCode            bool
@@ -128,12 +156,25 @@ func findMemoField(callExpr *exprv1.Expr_Call, filter *MemoFilter) {
 					tagSearch = append(tagSearch, value)
 				}
 				filter.TagSearch = tagSearch
+				// } else if idExpr.Name == "visibility" {
+				// 	visibility := callExpr.Args[1].GetConstExpr().GetStringValue()
+				// 	filter.Visibility = store.Visibility(visibility)
+			} else if idExpr.Name == "visibilities" {
+				visibilities := []store.Visibility{}
+				for _, expr := range callExpr.Args[1].GetListExpr().GetElements() {
+					value := expr.GetConstExpr().GetStringValue()
+					visibilities = append(visibilities, store.Visibility(value))
+				}
+				filter.Visibilities = visibilities
 			} else if idExpr.Name == "display_time_before" {
 				displayTimeBefore := callExpr.Args[1].GetConstExpr().GetInt64Value()
 				filter.DisplayTimeBefore = &displayTimeBefore
 			} else if idExpr.Name == "display_time_after" {
 				displayTimeAfter := callExpr.Args[1].GetConstExpr().GetInt64Value()
 				filter.DisplayTimeAfter = &displayTimeAfter
+			} else if idExpr.Name == "creator" {
+				creator := callExpr.Args[1].GetConstExpr().GetStringValue()
+				filter.Creator = &creator
 			} else if idExpr.Name == "has_link" {
 				value := callExpr.Args[1].GetConstExpr().GetBoolValue()
 				filter.HasLink = value

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 )
 
 // Role is the type of a role.
@@ -58,6 +59,12 @@ type User struct {
 	PasswordHash string
 	AvatarURL    string
 	Description  string
+	Gender       string
+	BirthDate    time.Time
+	Location     string
+	Industry     string
+	Occupation   string
+	University   string
 }
 
 type UpdateUser struct {
@@ -73,6 +80,12 @@ type UpdateUser struct {
 	AvatarURL    *string
 	PasswordHash *string
 	Description  *string
+	Gender       *string
+	BirthDate    *time.Time
+	Location     *string
+	Industry     *string
+	Occupation   *string
+	University   *string
 }
 
 type FindUser struct {

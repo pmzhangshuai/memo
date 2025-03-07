@@ -14,6 +14,7 @@ interface Props {
   renderer: (memo: Memo) => JSX.Element;
   listSort?: (list: Memo[]) => Memo[];
   owner?: string;
+  isFollow?: boolean;
   state?: State;
   direction?: Direction;
   filter?: string;
@@ -41,6 +42,7 @@ const PagedMemoList = (props: Props) => {
     setState((state) => ({ ...state, isRequesting: true }));
     const response = await memoStore.fetchMemos({
       parent: props.owner || "",
+      isFollow: props.isFollow || false,
       state: props.state || State.NORMAL,
       direction: props.direction || Direction.DESC,
       filter: props.filter || "",
@@ -65,29 +67,29 @@ const PagedMemoList = (props: Props) => {
   }, [props.owner, props.state, props.direction, props.filter, props.oldFilter, props.pageSize]);
 
   const children = (
-    <div className="flex flex-col justify-start items-start w-full max-w-full">
+    <div className="flex flex-col items-start justify-start w-full max-w-full">
       {sortedMemoList.map((memo) => props.renderer(memo))}
       {state.isRequesting && (
-        <div className="w-full flex flex-row justify-center items-center my-4">
+        <div className="flex flex-row items-center justify-center w-full my-4">
           <LoaderIcon className="animate-spin text-zinc-500" />
         </div>
       )}
       {!state.isRequesting && (
         <>
           {!state.nextPageToken && sortedMemoList.length === 0 ? (
-            <div className="w-full mt-12 mb-8 flex flex-col justify-center items-center italic">
+            <div className="flex flex-col items-center justify-center w-full mt-12 mb-8 italic">
               <Empty />
               <p className="mt-2 text-gray-600 dark:text-gray-400">{t("message.no-data")}</p>
             </div>
           ) : (
-            <div className="w-full flex flex-row justify-center items-center my-4">
+            <div className="flex flex-row items-center justify-center w-full my-4">
               {state.nextPageToken && (
                 <>
                   <Button variant="plain" onClick={() => fetchMoreMemos(state.nextPageToken)}>
                     {t("memo.load-more")}
-                    <ArrowDownIcon className="ml-1 w-4 h-auto" />
+                    <ArrowDownIcon className="w-4 h-auto ml-1" />
                   </Button>
-                  <SlashIcon className="mx-1 w-4 h-auto opacity-40" />
+                  <SlashIcon className="w-4 h-auto mx-1 opacity-40" />
                 </>
               )}
               <BackToTop />
@@ -107,12 +109,12 @@ const PagedMemoList = (props: Props) => {
     <PullToRefresh
       onRefresh={() => refreshList()}
       pullingContent={
-        <div className="w-full flex flex-row justify-center items-center my-4">
+        <div className="flex flex-row items-center justify-center w-full my-4">
           <LoaderIcon className="opacity-60" />
         </div>
       }
       refreshingContent={
-        <div className="w-full flex flex-row justify-center items-center my-4">
+        <div className="flex flex-row items-center justify-center w-full my-4">
           <LoaderIcon className="animate-spin" />
         </div>
       }
@@ -159,7 +161,7 @@ const BackToTop = () => {
   return (
     <Button variant="plain" onClick={scrollToTop}>
       {t("router.back-to-top")}
-      <ArrowUpIcon className="ml-1 w-4 h-auto" />
+      <ArrowUpIcon className="w-4 h-auto ml-1" />
     </Button>
   );
 };

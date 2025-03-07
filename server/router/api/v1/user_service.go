@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -198,6 +199,21 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 			update.AvatarURL = &request.User.AvatarUrl
 		} else if field == "description" {
 			update.Description = &request.User.Description
+		} else if field == "gender" {
+			update.Gender = &request.User.Gender
+		} else if field == "birth_date" {
+			if request.User.BirthDate != nil {
+				tempTime := (*request.User.BirthDate).AsTime()
+				update.BirthDate = &tempTime
+			}
+		} else if field == "location" {
+			update.Location = &request.User.Location
+		} else if field == "industry" {
+			update.Industry = &request.User.Industry
+		} else if field == "occupation" {
+			update.Occupation = &request.User.Occupation
+		} else if field == "university" {
+			update.University = &request.User.University
 		} else if field == "role" {
 			role := convertUserRoleToStore(request.User.Role)
 			update.Role = &role
@@ -218,6 +234,7 @@ func (s *APIV1Service) UpdateUser(ctx context.Context, request *v1pb.UpdateUserR
 
 	updatedUser, err := s.Store.UpdateUser(ctx, update)
 	if err != nil {
+		// log.Printf("update user: %s", *update.Gender)
 		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
 	}
 
@@ -254,28 +271,7 @@ func (s *APIV1Service) DeleteUser(ctx context.Context, request *v1pb.DeleteUserR
 	return &emptypb.Empty{}, nil
 }
 
-func (s *APIV1Service) IsFollowingUser(ctx context.Context, request *v1pb.UserFollow) (bool, error) {
-	currentUser, err := s.GetCurrentUser(ctx)
-	if err != nil {
-		return false, status.Errorf(codes.Internal, "failed to get current user: %v", err)
-	}
-
-	// currentUserID, err := ExtractUserIDFromName(request.Follow.UserName)
-	currentUserID := currentUser.ID
-	targetUserID, err := ExtractUserIDFromName(request.FollowingUserName)
-
-	result, err := s.Store.IsFollowingUser(ctx, &store.UserFollowing{
-		UserID:          currentUserID,
-		FollowingUserID: targetUserID,
-	})
-	if err != nil {
-		return false, status.Errorf(codes.Internal, "failed to check following status: %v", err)
-	}
-
-	return result, nil
-}
-
-func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserRequest) (*v1pb.UserFollow, error) {
+func (s *APIV1Service) IsFollowingUser(ctx context.Context, request *v1pb.IsFollowingUserRequest) (*v1pb.IsFollowingUserResponse, error) {
 	currentUser, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
@@ -283,11 +279,55 @@ func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserR
 
 	// currentUserID, err := ExtractUserIDFromName(request.Follow.UserName)
 	currentUserID := currentUser.ID
-	targetUserID, err := ExtractUserIDFromName(request.Follow.FollowingUserName)
+	// targetUserID, err := ExtractUserIDFromName(request.Follow.FollowingUserName)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
+	// }
+	targetUsername := request.Follow.FollowingUserName
+	user, err := s.Store.GetUser(ctx, &store.FindUser{Username: &targetUsername})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get target user: %v", err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "target user not found")
+	}
 
 	result, err := s.Store.IsFollowingUser(ctx, &store.UserFollowing{
 		UserID:          currentUserID,
-		FollowingUserID: targetUserID,
+		FollowingUserID: user.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check following status: %v", err)
+	}
+
+	// 构造响应消息
+	response := &v1pb.IsFollowingUserResponse{
+		Result: result,
+	}
+
+	return response, nil
+}
+
+func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserRequest) (*v1pb.UserFollowing, error) {
+	currentUser, err := s.GetCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+
+	// currentUserID, err := ExtractUserIDFromName(request.Follow.UserName)
+	currentUserID := currentUser.ID
+	targetUsername := request.Follow.FollowingUserName
+	user, err := s.Store.GetUser(ctx, &store.FindUser{Username: &targetUsername})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get target user: %v", err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "target user not found")
+	}
+
+	result, err := s.Store.IsFollowingUser(ctx, &store.UserFollowing{
+		UserID:          currentUserID,
+		FollowingUserID: user.ID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check following status: %v", err)
@@ -296,7 +336,7 @@ func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserR
 	if result {
 		err := s.Store.UnFollowUser(ctx, &store.UserFollowing{
 			UserID:          currentUserID,
-			FollowingUserID: targetUserID,
+			FollowingUserID: user.ID,
 		})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to unfollow user: %v", err)
@@ -304,24 +344,96 @@ func (s *APIV1Service) FollowUser(ctx context.Context, request *v1pb.FollowUserR
 	} else {
 		err := s.Store.FollowUser(ctx, &store.UserFollowing{
 			UserID:          currentUserID,
-			FollowingUserID: targetUserID,
+			FollowingUserID: user.ID,
 		})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to follow user: %v", err)
 		}
 	}
 
-	return &v1pb.UserFollow{
+	return &v1pb.UserFollowing{
 		UserName:          request.Follow.UserName,
 		FollowingUserName: request.Follow.FollowingUserName,
 	}, nil
 }
 
+func (s *APIV1Service) GetFollowingList(ctx context.Context, request *v1pb.GetFollowingListRequest) (*v1pb.ListUsersResponse, error) {
+	// user, err := s.GetCurrentUser(ctx)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	// }
+	userID, err := ExtractUserIDFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
+	}
+
+	followingList, err := s.Store.GetFollowingList(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get following list: %v", err)
+	}
+	if followingList == nil {
+		return nil, status.Errorf(codes.NotFound, "following list not found")
+	}
+
+	response2 := &v1pb.ListUsersResponse{
+		Users: []*v1pb.User{},
+	}
+	response := &v1pb.FollowingListResponse{
+		Users: []*v1pb.User{},
+	}
+	for _, user := range followingList {
+		// log.Printf("Original Following user: %s", user)
+		convertedUser := convertUserFromStore(user)
+		// log.Printf("Converted Following user: %s", convertedUser)
+		response2.Users = append(response2.Users, convertedUser)
+		response.Users = append(response.Users, convertedUser)
+	}
+
+	// for i, user := range followingList {
+	// 	log.Printf("Original Following user %d: %+v", i, user)
+	// }
+	// // 使用转换函数
+	// convertedUsers := convertUsersFromStore(followingList)
+	// for i, user := range convertedUsers {
+	// 	log.Printf("Converted Following user %d: %+v", i, user)
+	// }
+	// log.Printf("Converted followingList: %s", convertedUsers)
+	// response := &v1pb.FollowingListResponse{
+	// 	Users: convertedUsers,
+	// }
+	// log.Printf("Original response2: %s", response2)
+	// log.Printf("Original response: %s", response)
+
+	return response2, nil
+}
+
+func (s *APIV1Service) GetFollowerList(ctx context.Context, request *v1pb.GetFollowerListRequest) (*v1pb.FollowerListResponse, error) {
+	userID, err := ExtractUserIDFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user name: %v", err)
+	}
+	followerList, err := s.Store.GetFollowerList(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get follower list: %v", err)
+	}
+	if followerList == nil {
+		return nil, status.Errorf(codes.NotFound, "follower list not found")
+	}
+	response := &v1pb.FollowerListResponse{
+		Users: []*v1pb.User{},
+	}
+	for _, user := range followerList {
+		convertedUser := convertUserFromStore(user)
+		response.Users = append(response.Users, convertedUser)
+	}
+	return response, nil
+}
+
 func getDefaultUserSetting() *v1pb.UserSetting {
 	return &v1pb.UserSetting{
-		Locale:         "en",
+		Locale:         "zh-Hans",
 		Appearance:     "system",
-		MemoVisibility: "PRIVATE",
+		MemoVisibility: "PUBLIC",
 	}
 }
 
@@ -586,24 +698,88 @@ func (s *APIV1Service) UpsertAccessTokenToStore(ctx context.Context, user *store
 }
 
 func convertUserFromStore(user *store.User) *v1pb.User {
+	// 记录原始用户名和昵称
+	// log.Printf("Original name: %s", fmt.Sprintf("%s%d", UserNamePrefix, user.ID))
+	// log.Printf("Original Username: %s", user.Username)
+	// log.Printf("Original Nickname: %s", user.Nickname)
+	// log.Printf("Original Description: %s", user.Description)
+	// log.Printf("Original Email: %s", user.Email)
+	// log.Printf("Original AvatarUrl: %s", user.AvatarURL)
+	userid := validateAndConvertToUTF8(fmt.Sprintf("%s%d", UserNamePrefix, user.ID))
+	// 验证并转换用户名
+	username := validateAndConvertToUTF8(user.Username)
+	// 验证并转换昵称
+	nickname := validateAndConvertToUTF8(user.Nickname)
+	avatarURL := validateAndConvertToUTF8(user.AvatarURL)
+	description := validateAndConvertToUTF8(user.Description)
+	gender := validateAndConvertToUTF8(user.Gender)
+	location := validateAndConvertToUTF8(user.Location)
+	industry := validateAndConvertToUTF8(user.Industry)
+	occupation := validateAndConvertToUTF8(user.Occupation)
+	university := validateAndConvertToUTF8(user.University)
+	email := validateAndConvertToUTF8(user.Email)
+	// 记录转换后的用户名和昵称
+	// log.Printf("Converted name: %s", userid)
+	// log.Printf("Converted Username: %s", username)
+	// log.Printf("Converted Nickname: %s", nickname)
+	// log.Printf("Converted Description: %s", description)
+	// log.Printf("Converted Email: %s", email)
+	// log.Printf("Converted AvatarUrl: %s", avatarURL)
 	userpb := &v1pb.User{
-		Name:        fmt.Sprintf("%s%d", UserNamePrefix, user.ID),
+		Name:        userid,
 		State:       convertStateFromStore(user.RowStatus),
 		CreateTime:  timestamppb.New(time.Unix(user.CreatedTs, 0)),
 		UpdateTime:  timestamppb.New(time.Unix(user.UpdatedTs, 0)),
 		Role:        convertUserRoleFromStore(user.Role),
-		Username:    user.Username,
-		Email:       user.Email,
-		Nickname:    user.Nickname,
-		AvatarUrl:   user.AvatarURL,
-		Description: user.Description,
+		Username:    username,
+		Email:       email,
+		Nickname:    nickname,
+		AvatarUrl:   avatarURL,
+		Description: description,
+		Gender:      gender,
+		BirthDate:   timestamppb.New(user.BirthDate),
+		Location:    location,
+		Industry:    industry,
+		Occupation:  occupation,
+		University:  university,
 	}
 	// Use the avatar URL instead of raw base64 image data to reduce the response size.
 	if user.AvatarURL != "" {
 		userpb.AvatarUrl = fmt.Sprintf("/file/%s/avatar", userpb.Name)
+		// log.Printf("Original AvatarUrl: %s", userpb.AvatarUrl)
+		// avatarURL2 := validateAndConvertToUTF8(userpb.AvatarUrl)
+		// log.Printf("Converted AvatarUrl: %s", avatarURL2)
 	}
 	return userpb
 }
+
+// 验证并转换字符串为 UTF-8 编码
+func validateAndConvertToUTF8(input string) string {
+	// 如果字符串已经是有效的 UTF-8，则直接返回
+	if utf8.ValidString(input) {
+		return input
+	}
+
+	// 如果不是有效的 UTF-8，则进行转换（这里使用简单的替换策略作为示例）
+	var builder strings.Builder
+	for _, r := range input {
+		if r == utf8.RuneError {
+			// 替换无效的 UTF-8 字符为问号或其他占位符
+			builder.WriteRune('?')
+		} else {
+			builder.WriteRune(r)
+		}
+	}
+	return builder.String()
+}
+
+// func convertUsersFromStore(users []store.User) []*v1pb.User {
+// 	userList := make([]*v1pb.User, 0, len(users))
+// 	for _, user := range users {
+// 		userList = append(userList, convertUserFromStore(&user))
+// 	}
+// 	return userList
+// }
 
 func convertUserRoleFromStore(role store.Role) v1pb.User_Role {
 	switch role {

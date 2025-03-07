@@ -51,7 +51,7 @@ func ExtractWorkspaceSettingKeyFromName(name string) (string, error) {
 func ExtractUserIDFromName(name string) (int32, error) {
 	tokens, err := GetNameParentTokens(name, UserNamePrefix)
 	if err != nil {
-		return 0, err
+		return 0, errors.Errorf("invalid name: %v", err)
 	}
 	id, err := util.ConvertStringToInt32(tokens[0])
 	if err != nil {

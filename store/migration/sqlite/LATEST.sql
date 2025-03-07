@@ -27,7 +27,14 @@ CREATE TABLE
     nickname TEXT NOT NULL DEFAULT '',
     password_hash TEXT NOT NULL,
     avatar_url TEXT NOT NULL DEFAULT '',
-    description TEXT NOT NULL DEFAULT ''
+    description TEXT NOT NULL DEFAULT '',
+    -- 新增字段
+    gender TEXT NOT NULL CHECK (gender IN ('Male', 'Female', 'Other')) DEFAULT 'Other', -- 性别
+    birth_date DATE, -- 出生日期
+    location TEXT NOT NULL DEFAULT '', -- 所在地
+    industry TEXT NOT NULL DEFAULT '', -- 行业
+    occupation TEXT NOT NULL DEFAULT '', -- 职业
+    university TEXT NOT NULL DEFAULT '' -- 大学
   );
 
 CREATE INDEX idx_user_username ON user (username);

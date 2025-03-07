@@ -13,8 +13,8 @@ interface Props {
 const Tag: React.FC<Props> = ({ content }: Props) => {
   const context = useContext(RendererContext);
   const memoFilterStore = useMemoFilterStore();
-  const location = useLocation();
-  const navigateTo = useNavigateTo();
+  // const location = useLocation();
+  // const navigateTo = useNavigateTo();
 
   const handleTagClick = () => {
     if (context.disableFilter) {
@@ -22,14 +22,14 @@ const Tag: React.FC<Props> = ({ content }: Props) => {
     }
 
     // If the tag is clicked in a memo detail page, we should navigate to the memo list page.
-    if (location.pathname.startsWith("/m")) {
-      const pathname = context.parentPage || Routes.ROOT;
-      const searchParams = new URLSearchParams();
+    // if (location.pathname.startsWith("/m")) {
+    //   const pathname = context.parentPage || Routes.ROOT;
+    //   const searchParams = new URLSearchParams();
 
-      searchParams.set("filter", stringifyFilters([{ factor: "tagSearch", value: content }]));
-      navigateTo(`${pathname}?${searchParams.toString()}`);
-      return;
-    }
+    //   searchParams.set("filter", stringifyFilters([{ factor: "tagSearch", value: content }]));
+    //   navigateTo(`${pathname}?${searchParams.toString()}`);
+    //   return;
+    // }
 
     const isActive = memoFilterStore.getFiltersByFactor("tagSearch").some((filter) => filter.value === content);
     if (isActive) {

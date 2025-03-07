@@ -9,7 +9,8 @@ export type FilterFactor =
   | "displayTime"
   | "property.hasLink"
   | "property.hasTaskList"
-  | "property.hasCode";
+  | "property.hasCode"
+  | "resources";
 
 export interface MemoFilter {
   factor: FilterFactor;
@@ -38,9 +39,16 @@ export const stringifyFilters = (filters: MemoFilter[]): string => {
   return filters.map((filter) => `${filter.factor}:${encodeURIComponent(filter.value)}`).join(",");
 };
 
-interface State {
+export type CommentOrder =
+  | "asc"
+  | "desc"
+  | "default";
+
+export interface State {
   filters: MemoFilter[];
   orderByTimeAsc: boolean;
+  orderByComment: CommentOrder;
+  orderByReactions: CommentOrder;
   // The id of selected shortcut.
   shortcut?: string;
 }
@@ -49,7 +57,9 @@ const getInitialState = (): State => {
   const searchParams = new URLSearchParams(window.location.search);
   return {
     filters: parseFilterQuery(searchParams.get("filter")),
-    orderByTimeAsc: searchParams.get("orderBy") === "asc",
+    orderByTimeAsc: searchParams.get("orderByTime") === "asc",
+    orderByComment: searchParams.get("orderByComment") === "asc" ? "asc" : searchParams.get("orderByComment") === "desc" ? "desc" : "default",
+    orderByReactions: searchParams.get("orderByReactions") === "asc" ? "asc" : searchParams.get("orderByReactions") === "desc" ? "desc" : "default",
   };
 };
 

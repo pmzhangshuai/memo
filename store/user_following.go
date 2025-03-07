@@ -28,7 +28,7 @@ func (s *Store) FollowUser(ctx context.Context, follow *UserFollowing) error {
 		return err
 	}
 
-	s.userFollowCache.Store(follow.ID, follow)
+	// s.userFollowCache.Store(follow.UserID, follow.FollowingUserID)
 	return nil
 }
 
@@ -38,6 +38,25 @@ func (s *Store) UnFollowUser(ctx context.Context, UnFollow *UserFollowing) error
 		return err
 	}
 
-	s.userCache.Delete(UnFollow.ID)
+	// s.userFollowCache.Delete(UnFollow.UserID)
 	return nil
+}
+
+func (s *Store) GetFollowingList(ctx context.Context, userID int32) ([]*User, error) {
+	followingList, err := s.driver.GetFollowingList(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	// for _, user := range followingList {
+	// 	s.userFollowCache.Store(userID, user)
+	// }
+	return followingList, nil
+}
+
+func (s *Store) GetFollowerList(ctx context.Context, userID int32) ([]*User, error) {
+	followerList, err := s.driver.GetFollowerList(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return followerList, nil
 }

@@ -22,7 +22,10 @@ service ResourceService {
   }
   // ListResources lists all resources.
   rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse) {
-    option (google.api.http) = {get: "/api/v1/resources"};
+    option (google.api.http) = {
+      get: "/api/v1/resources"
+      additional_bindings: {get: "/api/v1/{parent=users/*}/resources"}
+     };
   }
   // GetResource returns a resource by name.
   rpc GetResource(GetResourceRequest) returns (Resource) {
@@ -76,7 +79,11 @@ message CreateResourceRequest {
   Resource resource = 1;
 }
 
-message ListResourcesRequest {}
+message ListResourcesRequest {
+  // The parent resource name, which should be in the form "users/*".
+  // If not provided, defaults to the currently logged-in user's resources.
+  optional string parent = 1;
+}
 
 message ListResourcesResponse {
   repeated Resource resources = 1;

@@ -21,7 +21,8 @@ const MemoCommentMessage = ({ inbox }: Props) => {
   const t = useTranslate();
   const navigateTo = useNavigateTo();
   const memoStore = useMemoStore();
-  const [relatedMemo, setRelatedMemo] = useState<Memo | undefined>(undefined);
+  const [commentMemo, setCommentMemo] = useState<Memo | undefined>(undefined);
+  const [relatedMemoName, setRelatedMemoName] = useState<string | undefined>(undefined);
   const [sender, setSender] = useState<User | undefined>(undefined);
   const [initialized, setInitialized] = useState<boolean>(false);
 
@@ -35,10 +36,12 @@ const MemoCommentMessage = ({ inbox }: Props) => {
     });
     if (activity.payload?.memoComment) {
       const memoCommentPayload = activity.payload.memoComment;
-      const memo = await memoStore.getOrFetchMemoByName(memoCommentPayload.relatedMemo, {
+      setRelatedMemoName(memoCommentPayload.relatedMemo);
+      const memo = await memoStore.getOrFetchMemoByName(memoCommentPayload.memo, {
         skipStore: true,
       });
-      setRelatedMemo(memo);
+      setCommentMemo(memo);
+      // console.log("commentMemo:", memo);
       const sender = await userStore.getOrFetchUserByName(inbox.sender);
       setSender(sender);
       setInitialized(true);
@@ -46,11 +49,11 @@ const MemoCommentMessage = ({ inbox }: Props) => {
   }, [inbox.activityId]);
 
   const handleNavigateToMemo = async () => {
-    if (!relatedMemo) {
+    if (!commentMemo) {
       return;
     }
 
-    navigateTo(`/${relatedMemo.name}`);
+    navigateTo(`/${commentMemo.name}`);
     if (inbox.status === Inbox_Status.UNREAD) {
       handleArchiveMessage(true);
     }
@@ -70,7 +73,7 @@ const MemoCommentMessage = ({ inbox }: Props) => {
   };
 
   return (
-    <div className="w-full flex flex-row justify-start items-start gap-3">
+    <div className="flex flex-row items-start justify-start w-full gap-3">
       <div
         className={cn(
           "shrink-0 mt-2 p-2 rounded-full border",
@@ -80,7 +83,7 @@ const MemoCommentMessage = ({ inbox }: Props) => {
         )}
       >
         <Tooltip title={"Comment"} placement="bottom">
-          <MessageCircleIcon className="w-4 sm:w-5 h-auto" />
+          <MessageCircleIcon className="w-4 h-auto sm:w-5" />
         </Tooltip>
       </div>
       <div
@@ -91,32 +94,36 @@ const MemoCommentMessage = ({ inbox }: Props) => {
       >
         {initialized ? (
           <>
-            <div className="w-full flex flex-row justify-between items-center">
+            <div className="flex flex-row items-center justify-between w-full">
               <span className="text-sm text-gray-500">{inbox.createTime?.toLocaleString()}</span>
               <div>
                 {inbox.status === Inbox_Status.UNREAD && (
-                  <Tooltip title={t("common.archive")} placement="top">
+                  <Tooltip title={t("common.mark-as-read")} placement="top">
                     <InboxIcon
-                      className="w-4 h-auto cursor-pointer text-gray-400 hover:text-blue-600"
+                      className="w-4 h-auto text-gray-400 cursor-pointer hover:text-blue-600"
                       onClick={() => handleArchiveMessage()}
                     />
                   </Tooltip>
                 )}
               </div>
             </div>
-            <p
-              className="text-base leading-tight cursor-pointer text-gray-500 dark:text-gray-400 hover:underline hover:text-blue-600"
+            <div
+              className="text-base leading-relaxed text-gray-500 cursor-pointer max-w-[60vw] dark:text-gray-400"
               onClick={handleNavigateToMemo}
             >
-              {t("inbox.memo-comment", {
-                user: sender?.nickname || sender?.username,
-                memo: relatedMemo?.name,
-                interpolation: { escapeValue: false },
-              })}
-            </p>
+              <p className="mb-2">
+                {t("inbox.memo-comment", {
+                  user: sender?.nickname || sender?.username,
+                  interpolation: { escapeValue: false },
+                })}
+              </p>
+              <p className="truncate">{t("inbox.memo-comment-content") + commentMemo?.content}</p>
+              <p className="truncate">{t("inbox.memo-comment-related") + relatedMemoName}</p>
+              <p className="mt-2 text-blue-500 hover:underline">{t("inbox.memo-comment-action")}</p>
+            </div>
           </>
         ) : (
-          <div className="w-full flex flex-row justify-center items-center my-2">
+          <div className="flex flex-row items-center justify-center w-full my-2">
             <LoaderIcon className="animate-spin text-zinc-500" />
           </div>
         )}

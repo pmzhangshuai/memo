@@ -72,6 +72,8 @@ const MemoContent: React.FC<Props> = (props: Props) => {
     SNIPPET: { text: t("memo.show-less"), nextState: "ALL" },
   };
 
+  // const [disableFilter, setDisableFilter] = useState(props.disableFilter);
+
   return (
     <RendererContext.Provider
       value={{
@@ -104,13 +106,13 @@ const MemoContent: React.FC<Props> = (props: Props) => {
             return <Renderer key={`${node.type}-${index}`} index={String(index)} node={node} />;
           })}
           {showCompactMode == "ALL" && (
-            <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-b from-transparent dark:to-zinc-800 to-white pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-full h-12 pointer-events-none bg-gradient-to-b from-transparent dark:to-zinc-800 to-white"></div>
           )}
         </div>
         {showCompactMode != undefined && (
           <div className="w-full mt-1">
             <span
-              className="w-auto flex flex-row justify-start items-center cursor-pointer text-sm text-blue-600 dark:text-blue-400 hover:opacity-80"
+              className="flex flex-row items-center justify-start w-auto text-sm text-blue-600 cursor-pointer dark:text-blue-400 hover:opacity-80"
               onClick={() => {
                 setShowCompactMode(compactStates[showCompactMode].nextState as ContentCompactView);
               }}

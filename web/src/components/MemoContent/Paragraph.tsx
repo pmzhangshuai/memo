@@ -6,13 +6,14 @@ interface Props extends BaseProps {
   children: Node[];
 }
 
+// <p></p>改为<div></div>，解决链接卡片的标题 <h3> cannot appear as a descendant of <p> 的问题
 const Paragraph: React.FC<Props> = ({ children }: Props) => {
   return (
-    <p>
+    <div>
       {children.map((child, index) => (
         <Renderer key={`${child.type}-${index}`} index={String(index)} node={child} />
       ))}
-    </p>
+    </div>
   );
 };
 

@@ -67,6 +67,8 @@ interface Props {
   node: Node;
 }
 
+// 这个其实就是根据Schema来渲染的，类似低代码的前端运行时渲染方式，每种节点对应一个块级组件，然后块级组件里面可能又有潜入的内联组件，比如段落里面就可能有文本、链接等等
+
 const Renderer: React.FC<Props> = ({ index, node }: Props) => {
   switch (node.type) {
     case NodeType.LINE_BREAK:

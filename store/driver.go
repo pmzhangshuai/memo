@@ -55,6 +55,8 @@ type Driver interface {
 	IsFollowingUser(ctx context.Context, follow *UserFollowing) (bool, error)
 	FollowUser(ctx context.Context, follow *UserFollowing) error
 	UnFollowUser(ctx context.Context, UnFollow *UserFollowing) error
+	GetFollowingList(ctx context.Context, userID int32) ([]*User, error)
+	GetFollowerList(ctx context.Context, userID int32) ([]*User, error)
 
 	// UserSetting model related methods.
 	UpsertUserSetting(ctx context.Context, upsert *UserSetting) (*UserSetting, error)

@@ -4,13 +4,20 @@ import { useContext, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useResourceStore } from "@/store/v1";
 import { Resource } from "@/types/proto/api/v1/resource_service";
+import { getResourceUrl } from "@/utils/resource";
+import { EditorRefActions } from "../Editor";
 import { MemoEditorContext } from "../types";
+
+interface Props {
+  editorRef: React.RefObject<EditorRefActions>;
+}
 
 interface State {
   uploadingFlag: boolean;
 }
 
-const UploadResourceButton = () => {
+const UploadResourceButton = (props: Props) => {
+  const { editorRef } = props;
   const context = useContext(MemoEditorContext);
   const resourceStore = useResourceStore();
   const [state, setState] = useState<State>({
@@ -50,6 +57,42 @@ const UploadResourceButton = () => {
           }),
         });
         createdResourceList.push(resource);
+        // console.log("type: ", type); // "image/jpeg", "video/mp4"
+        if (type.startsWith("image/")) {
+          if (editorRef.current) {
+            const resourceUrl = getResourceUrl(resource);
+            const cursorPosition = editorRef.current.getCursorPosition();
+            const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
+            if (prevValue !== "" && !prevValue.endsWith("\n")) {
+              editorRef.current.insertText("\n");
+            }
+            editorRef.current.insertText(`![${filename}](${resource.externalLink ? resourceUrl : resourceUrl + "?thumbnail=true"})\n`);
+            setTimeout(() => {
+              editorRef.current?.scrollToCursor();
+              editorRef.current?.focus();
+            });
+          } else {
+            console.error("editorRef.current is null");
+          }
+        } else if (type.startsWith("video/")) {
+          if (editorRef.current) {
+            const resourceUrl = getResourceUrl(resource);
+            const cursorPosition = editorRef.current.getCursorPosition();
+            const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
+            if (prevValue !== "" && !prevValue.endsWith("\n")) {
+              editorRef.current.insertText("\n");
+            }
+            editorRef.current.insertText(
+              '```__html\n<video\nclassName="cursor-pointer w-full h-full object-contain bg-zinc-100 dark:bg-zinc-800"\npreload="metadata"\ncrossOrigin="anonymous"\nsrc=' +
+                resourceUrl +
+                "\ncontrols\n/>\n```",
+            );
+            setTimeout(() => {
+              editorRef.current?.scrollToCursor();
+              editorRef.current?.focus();
+            });
+          }
+        }
       }
     } catch (error: any) {
       console.error(error);
@@ -66,7 +109,7 @@ const UploadResourceButton = () => {
   };
 
   return (
-    <Button className="relative" size="sm" variant="plain" disabled={state.uploadingFlag}>
+    <Button className="relative hover:bg-gray-200 dark:hover:bg-gray-600" size="sm" variant="plain" disabled={state.uploadingFlag}>
       <PaperclipIcon className="w-5 h-5 mx-auto" />
       <input
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

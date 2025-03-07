@@ -22,39 +22,39 @@ const MemoDetailSidebar = ({ memo, className, parentPage }: Props) => {
     <aside
       className={cn("relative w-full h-auto max-h-screen overflow-auto hide-scrollbar flex flex-col justify-start items-start", className)}
     >
-      <div className="flex flex-col justify-start items-start w-full px-1 gap-2 h-auto shrink-0 flex-nowrap hide-scrollbar">
+      <div className="flex flex-col items-start justify-start w-full h-auto gap-2 px-1 shrink-0 flex-nowrap hide-scrollbar">
         {shouldShowRelationGraph && (
-          <div className="relative w-full h-36 border rounded-lg bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800">
+          <div className="relative w-full border rounded-lg h-36 bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800">
             <MemoRelationForceGraph className="w-full h-full" memo={memo} parentPage={parentPage} />
-            <div className="absolute top-1 left-2 text-xs opacity-60 font-mono gap-1 flex flex-row items-center">
+            <div className="absolute flex flex-row items-center gap-1 font-mono text-xs top-1 left-2 opacity-60">
               <span>Relations</span>
               <span className="text-xs opacity-60">(Beta)</span>
             </div>
           </div>
         )}
-        <div className="w-full flex flex-col">
-          <p className="flex flex-row justify-start items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 dark:text-gray-500 select-none">
+        <div className="flex flex-col w-full">
+          <p className="flex flex-row items-center justify-start w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none dark:text-gray-500">
             <span>{t("common.created-at")}</span>
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">{memo.createTime?.toLocaleString()}</p>
         </div>
         {!isEqual(memo.createTime, memo.updateTime) && (
-          <div className="w-full flex flex-col">
-            <p className="flex flex-row justify-start items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 dark:text-gray-500 select-none">
-              <span>Last updated at</span>
+          <div className="flex flex-col w-full">
+            <p className="flex flex-row items-center justify-start w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none dark:text-gray-500">
+              <span>{t("common.updated-at")}</span>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{memo.updateTime?.toLocaleString()}</p>
           </div>
         )}
         {hasSpecialProperty && (
-          <div className="w-full flex flex-col">
-            <p className="flex flex-row justify-start items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 dark:text-gray-500 select-none">
+          <div className="flex flex-col w-full">
+            <p className="flex flex-row items-center justify-start w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none dark:text-gray-500">
               <span>{t("common.properties")}</span>
             </p>
-            <div className="w-full flex flex-row justify-start items-center gap-x-2 gap-y-1 flex-wrap text-gray-500 dark:text-gray-400">
+            <div className="flex flex-row flex-wrap items-center justify-start w-full text-gray-500 gap-x-2 gap-y-1 dark:text-gray-400">
               {property.hasLink && (
                 <div className="w-auto border dark:border-zinc-800 pl-1 pr-1.5 rounded-md flex justify-between items-center">
-                  <div className="w-auto flex justify-start items-center mr-1">
+                  <div className="flex items-center justify-start w-auto mr-1">
                     <LinkIcon className="w-4 h-auto mr-1" />
                     <span className="block text-sm">{t("memo.links")}</span>
                   </div>
@@ -62,7 +62,7 @@ const MemoDetailSidebar = ({ memo, className, parentPage }: Props) => {
               )}
               {property.hasTaskList && (
                 <div className="w-auto border dark:border-zinc-800 pl-1 pr-1.5 rounded-md flex justify-between items-center">
-                  <div className="w-auto flex justify-start items-center mr-1">
+                  <div className="flex items-center justify-start w-auto mr-1">
                     <CheckCircleIcon className="w-4 h-auto mr-1" />
                     <span className="block text-sm">{t("memo.to-do")}</span>
                   </div>
@@ -70,7 +70,7 @@ const MemoDetailSidebar = ({ memo, className, parentPage }: Props) => {
               )}
               {property.hasCode && (
                 <div className="w-auto border dark:border-zinc-800 pl-1 pr-1.5 rounded-md flex justify-between items-center">
-                  <div className="w-auto flex justify-start items-center mr-1">
+                  <div className="flex items-center justify-start w-auto mr-1">
                     <Code2Icon className="w-4 h-auto mr-1" />
                     <span className="block text-sm">{t("memo.code")}</span>
                   </div>
@@ -81,17 +81,17 @@ const MemoDetailSidebar = ({ memo, className, parentPage }: Props) => {
         )}
         {memo.tags.length > 0 && (
           <div className="w-full">
-            <div className="flex flex-row justify-start items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 dark:text-gray-500 select-none">
+            <div className="flex flex-row items-center justify-start w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none dark:text-gray-500">
               <span>{t("common.tags")}</span>
               <span className="shrink-0">({memo.tags.length})</span>
             </div>
-            <div className="w-full flex flex-row justify-start items-center relative flex-wrap gap-x-2 gap-y-1">
+            <div className="relative flex flex-row flex-wrap items-center justify-start w-full gap-x-2 gap-y-1">
               {memo.tags.map((tag) => (
                 <div
                   key={tag}
-                  className="shrink-0 w-auto max-w-full text-sm rounded-md leading-6 flex flex-row justify-start items-center select-none hover:opacity-80 text-gray-600 dark:text-gray-400 dark:border-zinc-800"
+                  className="flex flex-row items-center justify-start w-auto max-w-full text-sm leading-6 text-gray-600 rounded-md select-none shrink-0 hover:opacity-80 dark:text-gray-400 dark:border-zinc-800"
                 >
-                  <HashIcon className="group-hover:hidden w-4 h-auto shrink-0 opacity-40" />
+                  <HashIcon className="w-4 h-auto group-hover:hidden shrink-0 opacity-40" />
                   <div className={cn("inline-flex flex-nowrap ml-0.5 gap-0.5 cursor-pointer max-w-[calc(100%-16px)]")}>
                     <span className="truncate dark:opacity-80">{tag}</span>
                   </div>

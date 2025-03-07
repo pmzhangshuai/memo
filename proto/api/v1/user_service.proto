@@ -66,20 +66,26 @@ service UserService {
   // 判断是否已关注用户
   rpc IsFollowingUser(IsFollowingUserRequest) returns (IsFollowingUserResponse) {
     option (google.api.http) = {
-      get: "/api/v1/isfollow"
+      post: "/api/v1/isfollow"
       body: "follow"
     };
   }
   // 关注/取消关注用户
-  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {
+  rpc FollowUser(FollowUserRequest) returns (userFollowing) {
     option (google.api.http) = {
       post: "/api/v1/follow"
       body: "follow"
     };
   }
   // 获取关注列表
-  rpc GetFollowingList(GetFollowingListRequest) returns (GetFollowingList) {
-    option (google.api.http) = {get: "/api/v1/following"};
+  rpc GetFollowingList(GetFollowingListRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/api/v1/{name=users/*}/following"};
+    option (google.api.method_signature) = "name";
+  }
+  // 获取粉丝列表
+  rpc GetFollowerList(GetFollowerListRequest) returns (FollowerListResponse) {
+    option (google.api.http) = {get: "/api/v1/{name=users/*}/follower"};
+    option (google.api.method_signature) = "name";
   }
   // GetUserSetting gets the setting of a user.
   rpc GetUserSetting(GetUserSettingRequest) returns (UserSetting) {
@@ -163,13 +169,25 @@ message User {
 
   string description = 8;
 
-  string password = 9 [(google.api.field_behavior) = INPUT_ONLY];
+  string gender = 9;
 
-  State state = 10;
+  google.protobuf.Timestamp birth_date = 10;
 
-  google.protobuf.Timestamp create_time = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string location = 11;
 
-  google.protobuf.Timestamp update_time = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string industry = 12;
+
+  string occupation = 13;
+
+  string university = 14;
+
+  string password = 15 [(google.api.field_behavior) = INPUT_ONLY];
+
+  State state = 16;
+
+  google.protobuf.Timestamp create_time = 17 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  google.protobuf.Timestamp update_time = 18 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 message ListUsersRequest {}
@@ -243,6 +261,46 @@ message ListAllUserStatsResponse {
 message GetUserStatsRequest {
   // The name of the user.
   string name = 1;
+}
+
+message userFollowing {
+  string user_name = 1;
+
+  string following_user_name = 2;
+
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message IsFollowingUserRequest {
+  userFollowing follow = 1;
+}
+
+message IsFollowingUserResponse {
+  bool result = 1;
+}
+
+message FollowUserRequest {
+  userFollowing follow = 1;
+}
+
+message GetFollowingListRequest {
+  // The name of the user.
+  string name = 1;
+}
+
+message FollowingListResponse {
+  repeated User users = 1;
+}
+
+message GetFollowerListRequest {
+  // The name of the user.
+  string name = 1;
+}
+
+message FollowerListResponse {
+  repeated User users = 1;
 }
 
 message UserSetting {

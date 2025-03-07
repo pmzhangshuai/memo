@@ -48,7 +48,14 @@ func (d *DB) ListMemos(ctx context.Context, find *store.FindMemo) ([]*store.Memo
 		where, args = append(where, "memo.uid = "+placeholder(len(args)+1)), append(args, *v)
 	}
 	if v := find.CreatorID; v != nil {
-		where, args = append(where, "memo.creator_id = "+placeholder(len(args)+1)), append(args, *v)
+		if find.IsFollow {
+			// 使用PostgreSQL的ARRAY构造函数和ANY操作符来检查creator_id是否在子查询结果中
+			where = append(where, "`memo`.`creator_id` = ANY(ARRAY(SELECT `following_user_id` FROM `user_following` WHERE `user_id` = "+placeholder(len(args)+1)+"))")
+			args = append(args, *v)
+		} else {
+			// 简单的等值比较在PostgreSQL中同样适用
+			where, args = append(where, "`memo`.`creator_id` = "+placeholder(len(args)+1)), append(args, *v)
+		}
 	}
 	if v := find.RowStatus; v != nil {
 		where, args = append(where, "memo.row_status = "+placeholder(len(args)+1)), append(args, *v)
